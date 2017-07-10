@@ -68,6 +68,10 @@ Identifier = [:jletter:] [:jletterdigit:]*
 <YYINITIAL> {
 	{Identifier}                   { return symbol(sym.IDENTIFIER, yytext()); }
 	{DecIntegerLiteral}            { return symbol(sym.INTEGER_LITERAL, new Integer(yytext())); }
+	 /* Literais Booleanos */
+	"true" 						   { return symbol(sym.BOOLEAN_LITERAL, new Boolean(true)); }
+	"false"                        { return symbol(sym.BOOLEAN_LITERAL, new Boolean(false)); }
+		
 	
 	/* Palavras Reservadas */
 	"abstract"                      { return symbol(sym.ABSTRACT); }
@@ -115,10 +119,6 @@ Identifier = [:jletter:] [:jletterdigit:]*
     "try"                           { return symbol(sym.TRY); }
     "void"                          { return symbol(sym.VOID); }
     "while"                         { return symbol(sym.WHILE); }
-	
-    /* Literais Booleanos */
-	"true" 						   { return symbol(sym.BOOLEAN_LITERAL, new Boolean(true)); }
-	"false"                        { return symbol(sym.BOOLEAN_LITERAL, new Boolean(false)); }
 	
 	/* Separadores */
 	"("                             { return symbol(sym.LPAREN); }
