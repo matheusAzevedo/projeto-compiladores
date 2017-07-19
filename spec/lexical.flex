@@ -7,68 +7,51 @@ import compiler.core.*;
 
 %public
 %class Scanner
-/* 
-	yyline 
-*/
+%unicode
 %line
-/* 
-	yycolumn 
-*/
 %column
-/* 
-	Compatibilidade com o parser gerado pelo CUP. 
-*/
 %cup
-%{ 
-	StringBuffer string = new StringBuffer();
-	
-	private Symbol symbol(int type) {
+%cupdebug
+
+%{
+   StringBuffer string = new StringBuffer();
+
+  private Symbol symbol(int type) {
 		return new Token(type, yyline, yycolumn);
 	}
 	
-	private Symbol symbol(int type, Object value) {
+  private Symbol symbol(int type, Object value) {
 		return new Token(type, yyline, yycolumn, value);
-	}
-	
-	public String current_lexeme() {
-	    int line =  yyline + 1;
-	    int column = yycolumn + 1;
-	    return " (line: " + line + " , column: "+ column + " , lexeme: '" + yytext() + "')";
-	}
-	  
-	public int current_line() {
-	    return yyline + 1;
-	}
-}%
+  }
+%}
 
-/*
- 	Macros - Essas declaraçoes sao ER que serao usadas posteriormente nas regras lexicas.
- */
+/* White spaces*/
+LineTerminator = \r|\n|\r\n
+WhiteSpace = {LineTerminator} | [ \t\f]
 
-/* Linhas em branco */
-LineTerminator = \r | \n| \r\n
-InputCharacter = [^\r\n]
-WhiteSpace     = {LineTerminator} | [ \t\f]
-		
-/* Comentarios  TODO Fazer ainda */
-Comment = {TraditionalComment} | {EndOfLineComment} | {DocumentationComment}
-	
-/* Literais inteiros TODO ver tipos suportados */
+/* Integer literals */
 DecIntegerLiteral = 0 | [1-9][0-9]*
-LongLiteral    = {DecimalLiteral} [lL]
 
-/* Identificadores */
-Identifier = [:jletter:] [:jletterdigit:]*
+/* Identifiers */
+Identifier = [:jletter:][:jletterdigit:]*
+
+/* String and Character literals */
+StringCharacter = [^\r\n\"\\]
+SingleCharacter = [^\r\n\'\\]
 
 %state STRING, CHARLITERAL
 
+
+/* Comments */
+Comment = "/**" ( [^*] | \*+ [^/*] )* "*"+ "/"
+
 %%
 
-/* Regras Lexicas */
 <YYINITIAL> {
 	{Identifier}                   { return symbol(sym.IDENTIFIER, yytext()); }
 	{DecIntegerLiteral}            { return symbol(sym.INTEGER_LITERAL, new Integer(yytext())); }
-	 /* Literais Booleanos */
+	 
+	/* Literais Booleanos */
 	"true" 						   { return symbol(sym.BOOLEAN_LITERAL, new Boolean(true)); }
 	"false"                        { return symbol(sym.BOOLEAN_LITERAL, new Boolean(false)); }
 		
@@ -176,23 +159,51 @@ Identifier = [:jletter:] [:jletterdigit:]*
     "<<="							{ return symbol(sym.LSHIFTEQ); }
     "?"                             { return symbol(sym.QUESTION); }
 	
-    /* Comentarios */
     {Comment}                      { /* ignore */ }
     
-    /* String literal */
     \"                             { yybegin(STRING); string.setLength(0); }
 
-    /* Character literal */
     \'                             { yybegin(CHARLITERAL); }
     
-    /* Espaços em branco */
     {WhiteSpace}                   { /* ignore */ }
 }
 
-<STRING> {
-	\"                                { yybegin(YYINITIAL); return symbol(sym.STRING_LITERAL, string.toString()); }
+ <STRING> {
+  \"                                { yybegin(YYINITIAL); return symbol(sym.STRING_LITERAL, string.toString()); }
+
+  {StringCharacter}+                { string.append( yytext() ); }
+
+  "\\b"                             { string.append( '\b' ); }
+  "\\t"                             { string.append( '\t' ); }
+  "\\n"                             { string.append( '\n' ); }
+  "\\f"                             { string.append( '\f' ); }
+  "\\r"                             { string.append( '\r' ); }
+  "\\\""                            { string.append( '\"' ); }
+  "\\'"                             { string.append( '\'' ); }
+  "\\\\"                            { string.append( '\\' ); }
+  
+  \\.                               { throw new RuntimeException("Illegal escape sequence \""+yytext()+"\""); }
+  {LineTerminator}                  { throw new RuntimeException("Unterminated string at end of line"); }
+
 }
 
 <CHARLITERAL> {
-	
+  {SingleCharacter}\'               { yybegin(YYINITIAL); return symbol(sym.CHARACTER_LITERAL, new Character(yytext().charAt(0))); }
+  
+  "\\b"\'                           { yybegin(YYINITIAL); return symbol(sym.CHARACTER_LITERAL, new Character('\b'));}
+  "\\t"\'                           { yybegin(YYINITIAL); return symbol(sym.CHARACTER_LITERAL, new Character('\t'));}
+  "\\n"\'                           { yybegin(YYINITIAL); return symbol(sym.CHARACTER_LITERAL, new Character('\n'));}
+  "\\f"\'                           { yybegin(YYINITIAL); return symbol(sym.CHARACTER_LITERAL, new Character('\f'));}
+  "\\r"\'                           { yybegin(YYINITIAL); return symbol(sym.CHARACTER_LITERAL, new Character('\r'));}
+  "\\\""\'                          { yybegin(YYINITIAL); return symbol(sym.CHARACTER_LITERAL, new Character('\"'));}
+  "\\'"\'                           { yybegin(YYINITIAL); return symbol(sym.CHARACTER_LITERAL, new Character('\''));}
+  "\\\\"\'                          { yybegin(YYINITIAL); return symbol(sym.CHARACTER_LITERAL, new Character('\\')); }
+  
+  \\.                               { throw new RuntimeException("Illegal escape sequence \"" + yytext() + "\""); }
+  {LineTerminator}                  { throw new RuntimeException("Unterminated character literal at end of line"); }
+
 }
+/* Erro de retorno */
+[^]                              { throw new RuntimeException("Illegal character \""+ yytext() +
+                                                              "\" at line "+ yyline +", column "+ yycolumn); }
+<<EOF>>                          { return symbol(sym.EOF); }
