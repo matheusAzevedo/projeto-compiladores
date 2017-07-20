@@ -5,5 +5,8 @@
 	<classpathentry kind="lib" path="C:/Users/wendley/eclipse-workspace/java-compiler/lib/java-cup-11b.jar" sourcepath="lib/java-cup-11b.jar"/>
 	<classpathentry kind="lib" path="C:/Users/wendley/eclipse-workspace/java-compiler/lib/java-cup-11b-runtime.jar"/>
 	<classpathentry kind="lib" path="C:/Users/wendley/eclipse-workspace/java-compiler/lib/jflex-1.6.1.jar"/>
+	<classpathentry kind="lib" path="/home/asus-cap/Projetos/projeto-compiladores/lib/jflex-1.6.1.jar"/>
+	<classpathentry kind="lib" path="/home/asus-cap/Projetos/projeto-compiladores/lib/java-cup-11b-runtime.jar"/>
+	<classpathentry kind="lib" path="/home/asus-cap/Projetos/projeto-compiladores/lib/java-cup-11b.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
