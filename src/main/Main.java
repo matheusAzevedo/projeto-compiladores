@@ -6,13 +6,14 @@ import java.nio.file.Paths;
 
 import compiler.generated.Parser;
 import compiler.generated.Scanner;
-import java_cup.Lexer;
 import java_cup.runtime.Symbol;
 import util.Log;
 
 public class Main {
 
 	public static void main(String[] args) {
+		Long initialTime = System.currentTimeMillis();
+		
 		String rootPath = Paths.get("").toAbsolutePath().toString();
 		String filePath = "/examples/";
 		String sourcecode = rootPath + filePath + "code.txt";
@@ -34,7 +35,10 @@ public class Main {
 			e.printStackTrace();
 		}
 			
-		Log.log("CompilaÃ§Ã£o efetuada com sucesso.");
+		Long totalTime = System.currentTimeMillis() - initialTime;
+		Log.log("Tempo: " + totalTime + " ms");
+		
+		Log.log("Compilaçãoo efetuada com sucesso.");
 	}
 
 }

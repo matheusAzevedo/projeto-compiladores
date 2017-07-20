@@ -97,12 +97,12 @@ public class Parser extends java_cup.runtime.lr_parser {
 
 
 	public void report_error(String message, Object info){
-   		StringBuffer m = new StringBuffer("Error ");
+   		StringBuffer m = new StringBuffer("Erro ");
 
    		if (info instanceof java_cup.runtime.Symbol){
-     		m.append( "("+info.toString()+")" );
+     		m.append( "( "+ info.toString() + ")" );
 
-   			m.append(" : "+message);
+   			m.append(" : " + message);
 
    			System.out.println(m);
  		}
@@ -110,7 +110,7 @@ public class Parser extends java_cup.runtime.lr_parser {
 
  	public void report_fatal_error(String message, Object info) {
    		report_error(message, info);
-   		throw new RuntimeException("Fatal Syntax Error");
+   		throw new RuntimeException("Ocorreu um erro de sintaxe.");
  	}
 
 
@@ -156,7 +156,7 @@ class CUP$Parser$actions {
           case 1: // begin ::= INTEGER_LITERAL operator INTEGER_LITERAL SEMICOLON 
             {
               Object RESULT =null;
-              Log.log("Aqui");
+		Log.log("Aqui");
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("begin",0, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;

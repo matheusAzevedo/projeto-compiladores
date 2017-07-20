@@ -6,12 +6,12 @@ import compiler.core.*;
 import util.Log;
 parser code {:
 	public void report_error(String message, Object info){
-   		StringBuffer m = new StringBuffer("Error ");
+   		StringBuffer m = new StringBuffer("Erro ");
 
    		if (info instanceof java_cup.runtime.Symbol){
-     		m.append( "("+info.toString()+")" );
+     		m.append( "( "+ info.toString() + ")" );
 
-   			m.append(" : "+message);
+   			m.append(" : " + message);
 
    			System.out.println(m);
  		}
@@ -19,7 +19,7 @@ parser code {:
 
  	public void report_fatal_error(String message, Object info) {
    		report_error(message, info);
-   		throw new RuntimeException("Fatal Syntax Error");
+   		throw new RuntimeException("Ocorreu um erro de sintaxe.");
  	}
 :};
 
