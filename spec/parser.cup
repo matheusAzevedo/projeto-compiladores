@@ -1,0 +1,37 @@
+/*
+  parser.cup
+
+*/
+
+/* ------------ Declaracao dos temrinais e não terminais ----------- */
+
+/* ---- Palavras Reservadas ---- */
+terminal ABSTRACT;
+terminal BOOLEAN;
+terminal BREAK;
+terminal BYTE;
+terminal CASE;
+terminal CATCH;
+terminal CHAR;
+terminal CLASS;
+terminal CONTINUE;
+terminal DEFAULT;
+terminal DOUBLE;
+terminal DO;
+
+/* ---- Separadores ---- */
+
+/* ---- Atribuição ---- */
+
+/* ---- Operadores aritméticos ---- */
+
+/* ---- Operadores ---- */
+
+/* ---- Operadores Lógicos ----  */
+
+/* ---- Tipos ---- */
+terminal java.lang.Character CHARACTER_LITERAL;
+terminal java.lang.String STRING_LITERAL;
+terminal java.lang.Boolean BOOLEAN_LITERAL;
+terminal java.lang.String IDENTIFIER; 
+terminal java.lang.Integer INTEGER_LITERAL;
