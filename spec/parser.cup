@@ -18,7 +18,40 @@ terminal CONTINUE;
 terminal DEFAULT;
 terminal DOUBLE;
 terminal DO;
+terminal ELSE;
+terminal EXTENDS;
+terminal FINALLY;
+terminal FINAL;
+terminal FLOAT;
+terminal FOR;
+terminal IF;
+terminal IMPLEMENTS;
+terminal IMPORT;
+terminal INSTANCEOF;
+terminal INTERFACE;
+terminal INT;
+terminal LONG;
+terminal NATIVE;
+terminal NEW;
+terminal PACKAGE;
 
+terminal PRIVATE;
+terminal PROTECTED;
+terminal PUBLIC;
+
+terminal RETURN;
+terminal SHORT;
+terminal STATIC;
+terminal SUPER;
+terminal SWITCH;
+terminal SYNCHRONIZED;
+terminal THIS;
+terminal THREADSAFE;
+terminal THROW;
+terminal TRANSIENT;
+terminal TRY;
+terminal VOID;
+terminal WHILE;
 /* ---- Separadores ---- */
 
 /* ---- Atribuição ---- */
