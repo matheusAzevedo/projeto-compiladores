@@ -1,20 +1,24 @@
-/*
+	/*
   parser.cup
 
 */
-import java_cup.runtime.*;
-import compiler.core.*;
 import util.Log;
+import main.Main;
+
 parser code {:
+	public static int errors = 0;
+	
 	public void report_error(String message, Object info){
    		StringBuffer m = new StringBuffer("Erro ");
-
-   		if (info instanceof java_cup.runtime.Symbol){
+		
+		errors++;
+   		
+		if (info instanceof java_cup.runtime.Symbol){
      		m.append( "( "+ info.toString() + ")" );
 
    			m.append(" : " + message);
-
-   			System.out.println(m);
+			System.err.println("Erro "+ Main.scanner.current_lexeme() + " : Erro sintático");
+   			System.err.println(m);
  		}
 	}
 
@@ -54,6 +58,7 @@ terminal INT;
 terminal LONG;
 terminal NATIVE;
 terminal NEW;
+terminal NULL_LITERAL;
 terminal PACKAGE;
 
 terminal PRIVATE;
@@ -189,7 +194,7 @@ package_statement ::= PACKAGE entity_name SEMICOLON;
 import_statement_loop ::= import_statement 
 	| import_statement import_statement_loop;
 	
-import_statement ::= IMPORT import_aux:ia SEMICOLON;
+import_statement ::= IMPORT import_aux SEMICOLON;
 import_aux ::= entity_name DOT MULT
     | entity_name
 ;

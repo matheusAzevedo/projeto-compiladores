@@ -1,5 +1,4 @@
 package compiler.generated;
-import java_cup.*;
 import java_cup.runtime.*;
 import compiler.core.*;
 
@@ -22,6 +21,16 @@ import compiler.core.*;
 	
   private Symbol symbol(int type, Object value) {
 		return new Token(type, yyline, yycolumn, value);
+  }
+  
+  public String current_lexeme() {
+    int l = yyline + 1;
+    int c = yycolumn + 1;
+    return " (line: " + l + " , column: " + c + " , lexeme: '" + yytext() + "')";
+  }
+  
+  public int current_line() {
+    return yyline + 1;
   }
 %}
 
@@ -47,10 +56,7 @@ Comment = "/**" ( [^*] | \*+ [^/*] )* "*"+ "/"
 
 %%
 
-<YYINITIAL> {
-	{Identifier}                   { return symbol(sym.IDENTIFIER, yytext()); }
-	{DecIntegerLiteral}            { return symbol(sym.INTEGER_LITERAL, new Integer(yytext())); }
-	 
+<YYINITIAL> {	 
 	/* Literais Booleanos */
 	"true" 						   { return symbol(sym.BOOLEAN_LITERAL, new Boolean(true)); }
 	"false"                        { return symbol(sym.BOOLEAN_LITERAL, new Boolean(false)); }
@@ -114,10 +120,10 @@ Comment = "/**" ( [^*] | \*+ [^/*] )* "*"+ "/"
     ","                             { return symbol(sym.COMMA); }
     "."   		  				    { return symbol(sym.DOT); }
 	
-    /* Atribui��o */
+    /* Atribuicaoo */
     "="							    { return symbol(sym.EQ); }
 	
-    /* Operadores aritm�ticos */
+    /* Operadores aritmeticos */
     "+" 							{ return symbol(sym.PLUS); }
     "-" 						    { return symbol(sym.MINUS); }
     "*" 							{ return symbol(sym.MULT); }
@@ -138,7 +144,7 @@ Comment = "/**" ( [^*] | \*+ [^/*] )* "*"+ "/"
     ":"                             { return symbol(sym.COLON);}
     "~"                             { return symbol(sym.COMP); }
 	
-    /* Operadores L�gicos */
+    /* Operadores Logicos */
     "=="							{ return symbol(sym.EQEQ); }
     ">="							{ return symbol(sym.GTEQ); }
     "<="							{ return symbol(sym.LTEQ); }
@@ -166,6 +172,8 @@ Comment = "/**" ( [^*] | \*+ [^/*] )* "*"+ "/"
     \'                             { yybegin(CHARLITERAL); }
     
     {WhiteSpace}                   { /* ignore */ }
+    {Identifier}                   { return symbol(sym.IDENTIFIER, yytext()); }
+    {DecIntegerLiteral}            { return symbol(sym.INTEGER_LITERAL, new Integer(yytext())); }
 }
 
  <STRING> {
