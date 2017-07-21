@@ -17,7 +17,6 @@ public class Main {
 		String rootPath = Paths.get("").toAbsolutePath().toString();
 		String filePath = "/examples/";
 		String sourcecode = rootPath + filePath + "code.txt";
-		Log.log(sourcecode);
 		try {
 			Scanner scanner = new Scanner(new BufferedReader(new FileReader(sourcecode)));
 			
@@ -26,8 +25,8 @@ public class Main {
 			try {
 				s = parser.parse();
 		    } catch (Exception e) {
-		        System.out.println(e.getMessage());
-		        return;
+		        Log.logErro(e.getMessage());
+		        e.printStackTrace();
 		    }
 			System.out.println(s);
 		} catch (Exception e) {

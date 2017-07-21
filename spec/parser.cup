@@ -134,10 +134,71 @@ terminal java.lang.Boolean BOOLEAN_LITERAL;
 terminal java.lang.String IDENTIFIER; 
 terminal java.lang.Integer INTEGER_LITERAL;
 
-non terminal begin;
-non terminal operator;
+non terminal compilation_unit;
+non terminal type_specifier;
 
-start with begin;
+non terminal modifier;
+non terminal modifier_loop;
 
-begin ::= INTEGER_LITERAL operator INTEGER_LITERAL SEMICOLON {:Log.log("Aqui");:};
-operator ::= MINUS | PLUS | DIV | MULT;
+non terminal package_declaration_opt;
+non terminal package_statement;
+
+non terminal import_statement_loop;
+non terminal import_statement;
+non terminal import_aux;
+
+non terminal type_declaration;
+non terminal entity_name;
+
+non terminal class_declaration;
+non terminal interface_declaration;
+
+start with compilation_unit;
+
+type_specifier ::= BOOLEAN 
+	| BYTE 		                                                            
+    | CHAR 		                                                            
+    | SHORT		                                                            
+    | INT		                                                            
+    | FLOAT		                                                            
+    | LONG		                                                            
+    | DOUBLE 	                                                            
+    | VOID 		                                                            
+    | entity_name:en;
+
+modifier ::=
+    PUBLIC                                                                 
+    | PRIVATE                                                               
+    | PROTECTED                                                             
+    | STATIC                                                                
+    | FINAL                                                                 
+    | NATIVE                                                                
+    | SYNCHRONIZED                                                          
+    | ABSTRACT                                                              
+    | THREADSAFE                                                            
+    | TRANSIENT                                                            
+;
+    
+compilation_unit ::= package_declaration_opt import_statement_loop type_declaration  {:Log.log("init");:}
+	| package_declaration_opt type_declaration
+;
+package_statement ::= PACKAGE entity_name SEMICOLON;   
+
+package_declaration_opt ::= | package_statement;
+
+import_statement_loop ::= import_statement 
+	| import_statement import_statement_loop;
+	
+import_statement ::= IMPORT import_aux:ia SEMICOLON;
+import_aux ::= entity_name:en DOT MULT
+    | entity_name:en
+;
+
+entity_name ::=
+    IDENTIFIER:i                                                           
+    | entity_name DOT IDENTIFIER:i
+;
+type_declaration ::= class_declaration;
+class_declaration ::= modifier_loop CLASS IDENTIFIER:id LBRACE RBRACE;
+modifier_loop ::= | modifier modifier_loop;
+	 
