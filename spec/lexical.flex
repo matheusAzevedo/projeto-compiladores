@@ -114,10 +114,10 @@ Comment = "/**" ( [^*] | \*+ [^/*] )* "*"+ "/"
     ","                             { return symbol(sym.COMMA); }
     "."   		  				    { return symbol(sym.DOT); }
 	
-    /* Atribuição */
+    /* Atribuiï¿½ï¿½o */
     "="							    { return symbol(sym.EQ); }
 	
-    /* Operadores aritméticos */
+    /* Operadores aritmï¿½ticos */
     "+" 							{ return symbol(sym.PLUS); }
     "-" 						    { return symbol(sym.MINUS); }
     "*" 							{ return symbol(sym.MULT); }
@@ -138,7 +138,7 @@ Comment = "/**" ( [^*] | \*+ [^/*] )* "*"+ "/"
     ":"                             { return symbol(sym.COLON);}
     "~"                             { return symbol(sym.COMP); }
 	
-    /* Operadores Lógicos */
+    /* Operadores Lï¿½gicos */
     "=="							{ return symbol(sym.EQEQ); }
     ">="							{ return symbol(sym.GTEQ); }
     "<="							{ return symbol(sym.LTEQ); }

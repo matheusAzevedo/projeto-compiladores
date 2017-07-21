@@ -1,7 +1,11 @@
 package main;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Paths;
 
 import compiler.generated.Parser;
@@ -18,12 +22,17 @@ public class Main {
 		String filePath = "/examples/";
 		String sourcecode = rootPath + filePath + "code.txt";
 		try {
-			Scanner scanner = new Scanner(new BufferedReader(new FileReader(sourcecode)));
+			File file = new File(sourcecode);
+			InputStream is = new FileInputStream(file);
+			BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 			
+			Scanner scanner = new Scanner(br);
+			
+			@SuppressWarnings("deprecation")
 			Parser parser = new Parser(scanner);
 			Symbol s = null;
 			try {
-				s = parser.parse();
+				s = parser.debug_parse();
 		    } catch (Exception e) {
 		        Log.logErro(e.getMessage());
 		        e.printStackTrace();

@@ -2,6 +2,7 @@
   parser.cup
 
 */
+import java_cup.runtime.*;
 import compiler.core.*;
 import util.Log;
 parser code {:
@@ -23,7 +24,7 @@ parser code {:
  	}
 :};
 
-/* ------------ Declaracao dos temrinais e não terminais ----------- */
+/* ------------ Declaracao dos temrinais e nao terminais ----------- */
 
 /* ---- Palavras Reservadas ---- */
 terminal ABSTRACT;
@@ -83,10 +84,10 @@ terminal RBRACK;
 terminal SEMICOLON;
 terminal COMMA;
 terminal DOT;
-/* ---- Atribuição ---- */
+/* ---- Atribuicao ---- */
 terminal EQ;
 
-/* ---- Operadores aritméticos ---- */
+/* ---- Operadores aritmeticos ---- */
 
 terminal PLUS;
 terminal MINUS;
@@ -106,7 +107,7 @@ terminal URSHIFT;
 /* ---- Operadores ---- */
 terminal COLON;
 terminal COMP;
-/* ---- Operadores Lógicos ----  */
+/* ---- Operadores Logicos ----  */
 terminal EQEQ;
 terminal GTEQ;
 terminal LTEQ;
@@ -163,8 +164,7 @@ type_specifier ::= BOOLEAN
     | FLOAT		                                                            
     | LONG		                                                            
     | DOUBLE 	                                                            
-    | VOID 		                                                            
-    | entity_name:en;
+    | VOID 		                                                            ;
 
 modifier ::=
     PUBLIC                                                                 
@@ -178,27 +178,28 @@ modifier ::=
     | THREADSAFE                                                            
     | TRANSIENT                                                            
 ;
-    
-compilation_unit ::= package_declaration_opt import_statement_loop type_declaration  {:Log.log("init");:}
+        
+compilation_unit ::= package_declaration_opt import_statement_loop type_declaration
 	| package_declaration_opt type_declaration
 ;
-package_statement ::= PACKAGE entity_name SEMICOLON;   
 
 package_declaration_opt ::= | package_statement;
+package_statement ::= PACKAGE entity_name SEMICOLON;
 
 import_statement_loop ::= import_statement 
 	| import_statement import_statement_loop;
 	
 import_statement ::= IMPORT import_aux:ia SEMICOLON;
-import_aux ::= entity_name:en DOT MULT
-    | entity_name:en
+import_aux ::= entity_name DOT MULT
+    | entity_name
 ;
 
 entity_name ::=
-    IDENTIFIER:i                                                           
-    | entity_name DOT IDENTIFIER:i
+    IDENTIFIER                                                           
+    | entity_name DOT IDENTIFIER
 ;
 type_declaration ::= class_declaration;
-class_declaration ::= modifier_loop CLASS IDENTIFIER:id LBRACE RBRACE;
-modifier_loop ::= | modifier modifier_loop;
-	 
+
+class_declaration ::= modifier_loop CLASS entity_name LBRACE RBRACE;
+
+modifier_loop ::= | modifier modifier_loop; 
