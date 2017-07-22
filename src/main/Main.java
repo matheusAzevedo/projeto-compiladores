@@ -20,7 +20,7 @@ public class Main {
 		String rootPath = Paths.get("").toAbsolutePath().toString();
 		String filePath = "/examples/";
 		String sourcecode = rootPath + filePath + "code.txt";
-		
+
 		try {
 			File file = new File(sourcecode);
 			InputStream is = new FileInputStream(file);

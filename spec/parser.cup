@@ -142,9 +142,35 @@ terminal java.lang.Integer INTEGER_LITERAL;
 
 non terminal compilation_unit;
 non terminal type_specifier;
+non terminal type;
+
+non terminal expression;
+non terminal numeric_expression;
+non terminal literal_expression;
+non terminal string_expression;
+non terminal casting_expression;
+non terminal testing_expression;
+
+non terminal pre_pos_op;
+non terminal between_op;
+non terminal string_op;
+non terminal test_op;
+
+non terminal brack;
+non terminal brack_loop;
+
+non terminal comma_opt;
+
+non terminal termination_opt;
+
+non terminal statement;
+non terminal statement_block;
+non terminal statement_loop;
 
 non terminal modifier;
 non terminal modifier_loop;
+
+non terminal attribution;
 
 non terminal package_declaration_opt;
 non terminal package_statement;
@@ -153,13 +179,125 @@ non terminal import_statement_loop;
 non terminal import_statement;
 non terminal import_aux;
 
+non terminal for_statement;
+non terminal header_for;
+non terminal init_test_upd;
+
 non terminal type_declaration;
 non terminal entity_name;
 
+non terminal implements_declaration_opt;
+non terminal implements_declaration_loop;
+non terminal extends_declaration_opt;
 non terminal class_declaration;
 non terminal interface_declaration;
 
+non terminal field_declaration;
+non terminal field_declaration_loop;
+
+non terminal variable_declaration;
+non terminal variable_declaration_loop;
+non terminal variable_declarator;
+non terminal variable_declarator_loop;
+non terminal variable_initializer;
+non terminal variable_initializer_opt;
+non terminal variable_initializer_loop;
+non terminal attr_opt;
+
+non terminal method_declaration;
+
+non terminal parameter_list_opt;
+non terminal parameter_list;
+non terminal parameter;
+
+precedence nonassoc NOTEQ;	// Inserted by Eclipse plugin
+precedence nonassoc RPAREN;	// Inserted by Eclipse plugin
+precedence nonassoc GT;	// Inserted by Eclipse plugin
+precedence nonassoc LT;	// Inserted by Eclipse plugin
+precedence nonassoc LTEQ;	// Inserted by Eclipse plugin
+precedence nonassoc GTEQ;	// Inserted by Eclipse plugin
+precedence nonassoc EQEQ;	// Inserted by Eclipse plugin
+precedence nonassoc DIVEQ;	
+precedence nonassoc MULTEQ;	
+precedence nonassoc MINUSEQ;	
+precedence nonassoc PLUSEQ;	
+precedence nonassoc MINUSMINUS;	
+precedence nonassoc MODEQ;	
+precedence nonassoc MOD;	
+precedence nonassoc PLUSPLUS;	
+precedence nonassoc DIV;	
+precedence nonassoc MULT;	
+precedence nonassoc COMMA;	
+precedence nonassoc PLUS;
+precedence left PLUS, MINUS;	
+precedence left MULT, DIV;
+
 start with compilation_unit;
+
+expression ::= 
+	numeric_expression
+	| literal_expression
+	| string_expression
+	| casting_expression 
+	| testing_expression
+	| attribution
+	| THIS
+	| SUPER
+	| IDENTIFIER 
+;
+
+numeric_expression ::= 
+	MINUS expression 
+	| pre_pos_op 
+	| expression pre_pos_op
+	| expression between_op expression 
+;
+
+testing_expression ::=
+	expression test_op expression
+;
+
+casting_expression ::= 
+	LPAREN type RPAREN expression
+;
+
+string_op ::= 
+	PLUS
+	| PLUSEQ
+;
+
+string_expression ::= 
+	expression string_op expression;
+
+literal_expression ::= 
+	INTEGER_LITERAL
+	| BOOLEAN_LITERAL
+	| STRING_LITERAL
+	| CHARACTER_LITERAL;
+
+test_op ::= 
+	LT
+	| GT
+	| LTEQ
+	| GTEQ
+	| EQEQ
+	| NOTEQ;
+
+between_op ::= 
+	PLUS
+	| PLUSEQ
+	| MINUS
+	| MINUSEQ
+	| MULT
+	| MULTEQ
+	| DIV
+	| DIVEQ
+	| MOD
+	| MODEQ;
+
+pre_pos_op ::= 
+	PLUSPLUS 
+	| MINUSMINUS;
 
 type_specifier ::= BOOLEAN 
 	| BYTE 		                                                            
@@ -169,7 +307,9 @@ type_specifier ::= BOOLEAN
     | FLOAT		                                                            
     | LONG		                                                            
     | DOUBLE 	                                                            
-    | VOID 		                                                            ;
+    | VOID
+    | entity_name
+;
 
 modifier ::=
     PUBLIC                                                                 
@@ -203,8 +343,99 @@ entity_name ::=
     IDENTIFIER                                                           
     | entity_name DOT IDENTIFIER
 ;
+
 type_declaration ::= class_declaration;
 
-class_declaration ::= modifier_loop CLASS entity_name LBRACE RBRACE;
+extends_declaration_opt ::= | EXTENDS entity_name;
 
-modifier_loop ::= | modifier modifier_loop; 
+implements_declaration_loop ::= entity_name |
+						entity_name COMMA implements_declaration_opt;
+
+implements_declaration_opt ::= | IMPLEMENTS implements_declaration_loop;
+
+class_declaration ::= modifier_loop CLASS entity_name 
+					extends_declaration_opt 
+					implements_declaration_opt LBRACE field_declaration_loop RBRACE;
+
+method_declaration ::= modifier_loop type IDENTIFIER 
+					LPAREN parameter_list_opt RPAREN termination_opt;
+
+field_declaration ::= method_declaration 
+					| SEMICOLON;
+
+field_declaration_loop ::= | field_declaration field_declaration_loop;
+
+attribution ::= IDENTIFIER EQ expression;
+
+variable_declaration ::=
+	type variable_declarator_loop SEMICOLON
+	| modifier type variable_declarator_loop SEMICOLON;
+
+variable_declarator_loop ::= variable_declarator 
+	| variable_declarator COMMA variable_declarator_loop;
+
+variable_declarator ::= IDENTIFIER brack_loop attr_opt;
+
+attr_opt ::= 
+	| EQ variable_initializer;
+
+variable_initializer_opt ::=                             
+    | variable_initializer_loop comma_opt
+;
+
+variable_initializer_loop ::=
+    variable_initializer                                    
+    | variable_initializer COMMA variable_initializer_loop
+;
+
+variable_initializer ::= 
+	expression
+	| LBRACE variable_initializer_opt RBRACE 
+	| IDENTIFIER
+;
+
+comma_opt ::= | COMMA;
+
+type ::= type_specifier brack_loop;
+
+modifier_loop ::= | modifier modifier_loop;
+
+statement ::= 
+	variable_declaration
+	| expression SEMICOLON
+	| statement_block
+	| for_statement
+	| SEMICOLON;
+
+statement_block ::= LBRACE RBRACE | LBRACE statement_loop RBRACE;
+
+statement_loop ::= statement | statement_loop statement;
+
+for_statement ::= 
+	header_for expression SEMICOLON expression SEMICOLON RPAREN statement 
+	| header_for expression SEMICOLON RPAREN statement 
+	| header_for SEMICOLON RPAREN statement 
+	| header_for expression SEMICOLON expression RPAREN statement
+;
+
+header_for ::= 
+	FOR LPAREN init_test_upd	
+;
+
+init_test_upd ::= 
+	variable_declaration
+	| expression SEMICOLON
+	| SEMICOLON
+;
+
+termination_opt ::= statement_block | SEMICOLON;
+
+parameter ::= type IDENTIFIER brack_loop;
+
+parameter_list_opt ::= | parameter_list;
+
+parameter_list ::= parameter | parameter COMMA parameter_list;
+
+brack ::= LBRACK RBRACK;
+
+brack_loop ::= | brack brack_loop; 

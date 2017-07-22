@@ -1,7 +1,18 @@
 package examples;
 
 import java.lang.String;
+import java.util.*;
 
-public class Code {
+public class Code implements Arvore {
+	
+	public int metodo(int numero, String palavra) {
+		int variavel = 3 + 5;
+		
+		float casting = (String) true;
+		
+		for (int i = 0; i < 1; i++) {
+			variavel = 3;
+		}
 
+	}
 }
