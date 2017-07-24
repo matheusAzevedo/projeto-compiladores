@@ -4,15 +4,22 @@ import java.lang.String;
 import java.util.*;
 
 public class Code implements Arvore {
+
+	public Code() {
+		
+	}
 	
+	/** Este comentario precisa ser ignorado */
 	public int metodo(int numero, String palavra) {
 		int variavel = 3 + 5;
 		
-		float casting = (String) true;
+		int d = variavel >> 2;
+        int e = variavel >>> 3;
 		
+		float casting = (String) true;
+				
 		for (int i = 0; i < 1; i++) {
 			variavel = 3;
 		}
-
 	}
 }
