@@ -155,12 +155,14 @@ non terminal testing_expression;
 non terminal creating_expression;
 non terminal creating_expression_termination;
 non terminal creating_expression_opt;
+non terminal logical_expression;
 
 non terminal pre_pos_op;
 non terminal between_op;
 non terminal string_op;
 non terminal test_op;
 non terminal bit_op;
+non terminal logical_op;
 
 non terminal brack;
 non terminal brack_loop;
@@ -190,6 +192,11 @@ non terminal for_statement;
 non terminal header_for;
 non terminal init_test_upd;
 
+non terminal while_statement;
+
+non terminal if_statement;
+non terminal else_opt;
+
 non terminal type_declaration;
 non terminal entity_name;
 
@@ -198,6 +205,7 @@ non terminal implements_declaration_loop;
 non terminal extends_declaration_opt;
 non terminal class_declaration;
 non terminal interface_declaration;
+non terminal extends_interface_opt;
 
 non terminal field_declaration;
 non terminal field_declaration_loop;
@@ -269,6 +277,10 @@ class_declaration ::= modifier CLASS IDENTIFIER
 					extends_declaration_opt 
 					implements_declaration_opt LBRACE field_declaration_loop RBRACE
 ;
+
+extends_interface_opt ::= | EXTENDS implements_declaration_loop;
+
+interface_declaration ::= modifier INTERFACE IDENTIFIER extends_interface_opt LBRACE field_declaration_loop RBRACE;
 
 extends_declaration_opt ::= | EXTENDS entity_name;
 
@@ -343,6 +355,7 @@ expression ::=
 	| casting_expression 
 	| creating_expression
 	| testing_expression
+	| logical_expression
 	| attribution
 	| THIS
 	| SUPER
@@ -363,6 +376,12 @@ bit_expression ::=
 testing_expression ::=
 	expression test_op expression
 ;
+
+logical_expression ::= 
+	NOT expression
+	| expression logical_op expression 
+	| expression QUESTION expression COLON expression
+	| BOOLEAN_LITERAL;
 
 casting_expression ::= 
 	LPAREN type RPAREN expression
@@ -436,7 +455,21 @@ type_specifier ::= BOOLEAN
     | VOID
     | entity_name
 ;
-        
+
+logical_op ::=
+	AND
+	| ANDEQ
+	| OR
+	| OROR
+	| OREQ
+	| XOR
+	| XOREQ
+	| ANDAND
+	| OROREQ
+	| MOD
+	| MODEQ
+;
+
 entity_name ::=
     IDENTIFIER                                                           
     | entity_name DOT IDENTIFIER
@@ -457,7 +490,21 @@ statement ::=
 	| statement_block
 	| for_statement
 	| do_statement
+	| while_statement
+	| if_statement
 	| SEMICOLON
+;
+
+if_statement ::= 
+	IF LPAREN expression RPAREN statement else_opt
+;
+
+else_opt ::= 
+	| ELSE statement
+;
+
+while_statement ::=
+    WHILE LPAREN expression RPAREN statement
 ;
 
 do_statement ::= 
