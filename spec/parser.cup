@@ -139,6 +139,7 @@ terminal java.lang.String STRING_LITERAL;
 terminal java.lang.Boolean BOOLEAN_LITERAL;
 terminal java.lang.String IDENTIFIER; 
 terminal java.lang.Integer INTEGER_LITERAL;
+terminal java.lang.Number FLOATING_POINT_LITERAL;
 
 non terminal compilation_unit;
 non terminal type_specifier;
@@ -433,6 +434,8 @@ string_expression ::=
 
 literal_expression ::= 
 	INTEGER_LITERAL
+	| FLOATING_POINT_LITERAL
+	| BOOLEAN_LITERAL
 	| STRING_LITERAL
 	| CHARACTER_LITERAL
 	| NULL_LITERAL

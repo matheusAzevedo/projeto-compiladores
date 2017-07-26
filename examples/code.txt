@@ -11,11 +11,11 @@ public class Code implements Arvore {
 	
 	/** Este comentario precisa ser ignorado */
 	public int metodo(int numero, String palavra) {
-		int variavel = 3 + 5;
+		int variavel = 3 + 5.555;
 		
 		int d = variavel >> 2;
         int e = variavel >>> 3;
-		boolean casting = (boolean) true;
+		boolean casting = (float) true;
 		
 		boolean t = true;
         boolean f = false;
