@@ -17,7 +17,7 @@ parser code {:
      		m.append( "( "+ info.toString() + ")" );
 
    			m.append(" : " + message);
-			System.err.println("Erro "+ Main.scanner.current_lexeme() + " : Erro sintático");
+			System.err.println("Erro "+ Main.scanner.current_lexeme() + " : Erro sintï¿½tico");
    			System.err.println(m);
  		}
 	}
@@ -488,7 +488,9 @@ logical_op ::=
 	| MODEQ
 ;
 
-entity_name ::= entity_name DOT IDENTIFIER
+entity_name ::=
+	IDENTIFIER 
+	| entity_name DOT IDENTIFIER
 ;
 
 static_initializer ::= STATIC statement_block;
@@ -505,17 +507,16 @@ statement ::=
 	variable_declaration
 	| expression SEMICOLON
 	| statement_block
-	| for_statement
+	| if_statement
 	| do_statement
 	| while_statement
-	| if_statement
-	| switch_statement
+	| for_statement
 	| try_statement
+	| switch_statement
 	| SYNCHRONIZED LPAREN expression RPAREN statement
 	| RETURN expression_opt SEMICOLON
-	| RETURN SEMICOLON
 	| THROW expression SEMICOLON
-	| COLON statement
+	| IDENTIFIER COLON statement
 	| BREAK identifier_opt SEMICOLON
 	| CONTINUE identifier_opt SEMICOLON 
 	| SEMICOLON
@@ -601,17 +602,19 @@ expression_loop ::=
 
 expression ::= 
 	numeric_expression
-	| literal_expression
-	| string_expression
-	| bit_expression
-	| casting_expression 
-	| creating_expression
 	| testing_expression
 	| logical_expression
-	| attribution
-	| call_method
+	| string_expression
+	| bit_expression
+	| casting_expression
+	| creating_expression
+	| literal_expression
+	| NULL_LITERAL
 	| SUPER
 	| THIS
+	| IDENTIFIER 
+	| attribution
+	| call_method
 	| LPAREN expression RPAREN
 	| expression expression_exp
 ;
@@ -619,15 +622,3 @@ expression ::=
 brack ::= LBRACK RBRACK;
 
 brack_loop ::= | brack brack_loop;
-
-// ~~ CUP-ECLIPSE:CONFLICT-RES-RR ~~ 
- // After this the order of productions matters
-
-//Separated and moved by CUP Eclipse plugin
-entity_name ::= 
-    IDENTIFIER                                                           
-    ;
-
-//Separated and moved by CUP Eclipse plugin
-expression ::=  IDENTIFIER 
-	; 
