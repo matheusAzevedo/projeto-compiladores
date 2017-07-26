@@ -15,7 +15,7 @@ public class Code implements Arvore {
 		
 		int d = variavel >> 2;
         int e = variavel >>> 3;
-		boolean casting = (String) true;
+		boolean casting = (boolean) true;
 		
 		boolean t = true;
         boolean f = false;
@@ -36,6 +36,25 @@ public class Code implements Arvore {
             "ERRO";
         } else {
             "MENTIRA";
+        }
+        
+        switch (month){
+            case 1: abv = "J";
+                    break;
+            default: abv = "";
+                      break;
+        }
+        
+         try{
+            if(True){
+                System.out.println("dad");
+            }else if(10<=15){
+                "ERRO";
+            }else{
+                null;
+            }
+        } catch(Exception e){
+            int erro;
         }
 	}
 

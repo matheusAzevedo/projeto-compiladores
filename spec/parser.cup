@@ -143,9 +143,12 @@ terminal java.lang.Integer INTEGER_LITERAL;
 non terminal compilation_unit;
 non terminal type_specifier;
 non terminal type;
+non terminal identifier_opt;
 
 non terminal expression;
+non terminal expression_opt;
 non terminal expression_loop;
+non terminal expression_exp;
 non terminal numeric_expression;
 non terminal literal_expression;
 non terminal string_expression;
@@ -156,6 +159,7 @@ non terminal creating_expression;
 non terminal creating_expression_termination;
 non terminal creating_expression_opt;
 non terminal logical_expression;
+non terminal call_method;
 
 non terminal pre_pos_op;
 non terminal between_op;
@@ -197,8 +201,16 @@ non terminal while_statement;
 non terminal if_statement;
 non terminal else_opt;
 
+non terminal switch_statement;
+non terminal case_loop;
+non terminal case_op;
+
 non terminal type_declaration;
 non terminal entity_name;
+
+non terminal try_statement;
+non terminal catch_op_loop;
+non terminal finally_opt;
 
 non terminal implements_declaration_opt;
 non terminal implements_declaration_loop;
@@ -215,7 +227,6 @@ non terminal declarations;
 non terminal static_initializer;
 
 non terminal variable_declaration;
-non terminal variable_declaration_loop;
 non terminal variable_declarator;
 non terminal variable_declarator_loop;
 non terminal variable_initializer;
@@ -229,6 +240,15 @@ non terminal parameter;
 
 non terminal arglist;
 
+precedence left ELSE;
+precedence right NOT;
+precedence left COMP;
+precedence left SEMICOLON;
+precedence left FINALLY;
+precedence left NEW;
+precedence left OROREQ;
+precedence left OROR;
+precedence left CATCH;
 precedence left INSTANCEOF;
 precedence left DOT;
 precedence left COMMA;
@@ -256,6 +276,7 @@ precedence left STRING_LITERAL;
 precedence left CHARACTER_LITERAL;
 precedence left NULL_LITERAL;
 precedence left IDENTIFIER;
+
 
 start with compilation_unit;
 
@@ -344,27 +365,22 @@ variable_initializer_loop ::=
 variable_initializer ::= 
 	expression
 	| LBRACE variable_initializer_opt RBRACE 
-	| IDENTIFIER
+
 ;
 
-expression ::= 
-	numeric_expression
-	| literal_expression
-	| string_expression
-	| bit_expression
-	| casting_expression 
-	| creating_expression
-	| testing_expression
-	| logical_expression
-	| attribution
-	| THIS
-	| SUPER
-	| IDENTIFIER 
+expression_exp ::=
+	LPAREN arglist RPAREN
+    | LBRACK expression RBRACK  
+    | DOT expression  
+    | COMMA expression  
+    | INSTANCEOF entity_name
 ;
+
+call_method ::= IDENTIFIER LPAREN arglist RPAREN;
 
 numeric_expression ::= 
 	MINUS expression 
-	| pre_pos_op 
+	| pre_pos_op expression
 	| expression pre_pos_op
 	| expression between_op expression 
 ;
@@ -412,13 +428,15 @@ string_op ::=
 ;
 
 string_expression ::= 
-	expression string_op expression;
+	expression string_op expression
+;
 
 literal_expression ::= 
 	INTEGER_LITERAL
-	| BOOLEAN_LITERAL
 	| STRING_LITERAL
-	| CHARACTER_LITERAL;
+	| CHARACTER_LITERAL
+	| NULL_LITERAL
+;
 
 test_op ::= 
 	LT
@@ -470,11 +488,8 @@ logical_op ::=
 	| MODEQ
 ;
 
-entity_name ::=
-    IDENTIFIER                                                           
-    | entity_name DOT IDENTIFIER
+entity_name ::= entity_name DOT IDENTIFIER
 ;
-
 
 static_initializer ::= STATIC statement_block;
 
@@ -484,6 +499,8 @@ comma_opt ::= | COMMA;
 
 type ::= type_specifier brack_loop;
 
+identifier_opt ::= | IDENTIFIER;
+
 statement ::= 
 	variable_declaration
 	| expression SEMICOLON
@@ -492,7 +509,25 @@ statement ::=
 	| do_statement
 	| while_statement
 	| if_statement
+	| switch_statement
+	| try_statement
+	| SYNCHRONIZED LPAREN expression RPAREN statement
+	| RETURN expression_opt SEMICOLON
+	| RETURN SEMICOLON
+	| THROW expression SEMICOLON
+	| COLON statement
+	| BREAK identifier_opt SEMICOLON
+	| CONTINUE identifier_opt SEMICOLON 
 	| SEMICOLON
+;
+
+try_statement ::= TRY statement catch_op_loop finally_opt; 
+
+catch_op_loop ::= 
+	| catch_op_loop CATCH LPAREN parameter RPAREN statement;
+
+finally_opt ::= 
+	| FINALLY statement
 ;
 
 if_statement ::= 
@@ -506,6 +541,18 @@ else_opt ::=
 while_statement ::=
     WHILE LPAREN expression RPAREN statement
 ;
+
+switch_statement ::= 
+	SWITCH LPAREN expression RPAREN LBRACE case_loop RBRACE;
+
+case_loop ::= 
+	| case_loop case_op
+;
+
+case_op ::= 
+	CASE expression COLON
+	| DEFAULT COLON
+	| statement;
 
 do_statement ::= 
 	DO statement WHILE LPAREN expression RPAREN SEMICOLON
@@ -527,10 +574,13 @@ header_for ::=
 ;
 
 init_test_upd ::= 
-	variable_declaration
-	| expression SEMICOLON
+	| variable_declaration
+	| expression_opt SEMICOLON
 	| SEMICOLON
 ;
+
+expression_opt ::= 
+	| expression;
 
 termination_opt ::= statement_block | SEMICOLON;
 
@@ -549,6 +599,35 @@ expression_loop ::=
     | expression_loop COMMA expression                                                                                            
 ;
 
+expression ::= 
+	numeric_expression
+	| literal_expression
+	| string_expression
+	| bit_expression
+	| casting_expression 
+	| creating_expression
+	| testing_expression
+	| logical_expression
+	| attribution
+	| call_method
+	| SUPER
+	| THIS
+	| LPAREN expression RPAREN
+	| expression expression_exp
+;
+
 brack ::= LBRACK RBRACK;
 
-brack_loop ::= | brack brack_loop; 
+brack_loop ::= | brack brack_loop;
+
+// ~~ CUP-ECLIPSE:CONFLICT-RES-RR ~~ 
+ // After this the order of productions matters
+
+//Separated and moved by CUP Eclipse plugin
+entity_name ::= 
+    IDENTIFIER                                                           
+    ;
+
+//Separated and moved by CUP Eclipse plugin
+expression ::=  IDENTIFIER 
+	; 
