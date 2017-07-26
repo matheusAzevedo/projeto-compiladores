@@ -1,0 +1,10 @@
+### Eclipse ###
+bin/
+.settings/
+
+### Java ###
+# Compiled class file
+*.class
+
+# JDT-specific (Eclipse Java Development Tools)		
+.classpath
