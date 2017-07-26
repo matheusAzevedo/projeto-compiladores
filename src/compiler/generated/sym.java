@@ -105,6 +105,7 @@ public class sym {
   public static final int STATIC = 36;
   public static final int LSHIFT = 69;
   public static final int XOR = 88;
+  public static final int FLOATING_POINT_LITERAL = 98;
   public static final int MINUSEQ = 63;
   public static final String[] terminalNames = new String[] {
   "EOF",
@@ -204,7 +205,8 @@ public class sym {
   "STRING_LITERAL",
   "BOOLEAN_LITERAL",
   "IDENTIFIER",
-  "INTEGER_LITERAL"
+  "INTEGER_LITERAL",
+  "FLOATING_POINT_LITERAL"
   };
 }
 

@@ -4,6 +4,8 @@
 */
 import util.Log;
 import main.Main;
+import compiler.core.*;
+import compiler.analysis.*;
 
 parser code {:
 	public static int errors = 0;
@@ -295,8 +297,13 @@ import_aux ::= entity_name DOT MULT | entity_name;
 
 type_declaration ::= class_declaration | interface_declaration;
 
-class_declaration ::= modifier CLASS IDENTIFIER 
-					extends_declaration_opt 
+class_declaration ::= modifier CLASS IDENTIFIER:id {:  
+						Type type = new Type(id);
+						SemanticsImpl.getInstance().addType(type);
+					:} 
+					extends_declaration_opt:superclass {:
+						SemanticImpl.getInstance().addSupertype((String) id, (String) superclass);
+					:} 
 					implements_declaration_opt LBRACE field_declaration_loop RBRACE
 ;
 
@@ -304,7 +311,7 @@ extends_interface_opt ::= | EXTENDS implements_declaration_loop;
 
 interface_declaration ::= modifier INTERFACE IDENTIFIER extends_interface_opt LBRACE field_declaration_loop RBRACE;
 
-extends_declaration_opt ::= | EXTENDS entity_name;
+extends_declaration_opt ::= | EXTENDS entity_name:name {:RESULT = name;:};
 
 modifier_loop ::= | modifier_loop modifier;
 
@@ -433,12 +440,12 @@ string_expression ::=
 ;
 
 literal_expression ::= 
-	INTEGER_LITERAL
-	| FLOATING_POINT_LITERAL
-	| BOOLEAN_LITERAL
-	| STRING_LITERAL
-	| CHARACTER_LITERAL
-	| NULL_LITERAL
+	INTEGER_LITERAL {::}
+	| FLOATING_POINT_LITERAL {::}
+	| BOOLEAN_LITERAL {::}
+	| STRING_LITERAL {::}
+	| CHARACTER_LITERAL {::}
+	| NULL_LITERAL {::}
 ;
 
 test_op ::= 
@@ -465,16 +472,19 @@ pre_pos_op ::=
 	PLUSPLUS 
 	| MINUSMINUS;
 
-type_specifier ::= BOOLEAN 
-	| BYTE 		                                                            
-    | CHAR 		                                                            
-    | SHORT		                                                            
-    | INT		                                                            
-    | FLOAT		                                                            
-    | LONG		                                                            
-    | DOUBLE 	                                                            
-    | VOID
-    | entity_name
+type_specifier ::= BOOLEAN {:RESULT = new Type("boolean");:}
+	| BYTE {:RESULT = new Type("byte");:}		                                                            
+    | CHAR {:RESULT = new Type("char");:}		                                                            
+    | SHORT	{:RESULT = new Type("short");:}	                                                            
+    | INT {:RESULT = new Type("int");:}		                                                            
+    | FLOAT	{:RESULT = new Type("float");:}	                                                            
+    | LONG	{:RESULT = new Type("long");:}	                                                            
+    | DOUBLE {:RESULT = new Type("double");:}	                                                            
+    | VOID {:RESULT = new Type("void");:}
+    | entity_name:en {:
+		Type type = new Type((String) en); 
+		RESULT = type;
+	:}
 ;
 
 logical_op ::=
