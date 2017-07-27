@@ -1,9 +1,9 @@
 package compiler.exceptions;
 
-public class InvalidTypeException extends Exception{
+public class InvalidTypeException extends Exception {
 	private static final long serialVersionUID = 1L;
-	
-	public InvalidTypeException(String message){
-		 super(message);
-	 }
+
+	public InvalidTypeException(String message) {
+		super(message);
+	}
 }

@@ -3,9 +3,11 @@
 
 */
 import util.Log;
+import util.ListCreator;
 import main.Main;
 import compiler.core.*;
 import compiler.analysis.*;
+import java.util.ArrayList;
 
 parser code {:
 	public static int errors = 0;
@@ -19,7 +21,7 @@ parser code {:
      		m.append( "( "+ info.toString() + ")" );
 
    			m.append(" : " + message);
-			System.err.println("Erro "+ Main.scanner.current_lexeme() + " : Erro sint�tico");
+			System.err.println("Erro "+ Main.scanner.current_lexeme() + " : Erro sintiatico");
    			System.err.println(m);
  		}
 	}
@@ -292,6 +294,7 @@ package_declaration_opt ::= | package_statement;
 
 import_statement_loop ::= import_statement 
 	| import_statement import_statement_loop;
+
 import_statement ::= IMPORT import_aux SEMICOLON;
 import_aux ::= entity_name DOT MULT | entity_name;
 
@@ -302,7 +305,7 @@ class_declaration ::= modifier CLASS IDENTIFIER:id {:
 						SemanticsImpl.getInstance().addType(type);
 					:} 
 					extends_declaration_opt:superclass {:
-						SemanticImpl.getInstance().addSupertype((String) id, (String) superclass);
+						SemanticsImpl.getInstance().addSuperType((String) id, (String) superclass);
 					:} 
 					implements_declaration_opt LBRACE field_declaration_loop RBRACE
 ;
@@ -333,7 +336,10 @@ implements_declaration_loop ::= entity_name |
 ;
 implements_declaration_opt ::= | IMPLEMENTS implements_declaration_loop;
 
-field_declaration_loop ::= | field_declaration_loop field_declaration;
+field_declaration_loop ::= | field_declaration_loop field_declaration:fd {:
+	RESULT = fd;
+:};
+
 field_declaration ::= 
 	declarations
 	| static_initializer
@@ -345,35 +351,60 @@ declarations ::=
 	| variable_declaration
 ;
 
-method_declaration ::= modifier_loop type IDENTIFIER 
-					LPAREN parameter_list_opt RPAREN termination_opt;
+method_declaration ::= modifier_loop type:t IDENTIFIER:id 
+					LPAREN parameter_list_opt:p RPAREN {:
+	SemanticsImpl.getInstance().validateFunction(id, (ArrayList<Parameter>) p, (Type) t);
+:} termination_opt:to {:
+	if(to instanceof Expression){
+		SemanticsImpl.getInstance().exitCurrentScope((Expression) to);
+	} else {
+		SemanticsImpl.getInstance().exitCurrentScope();
+	}
+:};
 
 constructor_declaration ::= modifier_loop IDENTIFIER LPAREN parameter_list_opt RPAREN statement_block;
 
-variable_declaration ::= modifier_loop type variable_declarator_loop SEMICOLON;
+variable_declaration ::= modifier_loop type:t variable_declarator_loop:v SEMICOLON {:
+	SemanticsImpl.getInstance().addVariablesFromTempList((Type) t);
+	RESULT = v;
+:};
 
 variable_declarator_loop ::= 
-	variable_declarator 
-	| variable_declarator_loop COMMA variable_declarator;
+	variable_declarator:var {:
+ 		SemanticsImpl.getInstance().addVariableToTempList((Variable) var); 
+		RESULT = var;
+	:}
+	| variable_declarator:var COMMA variable_declarator_loop {:
+		 SemanticsImpl.getInstance().addVariableToTempList((Variable) var);
+	:};
 
-variable_declarator ::= IDENTIFIER brack_loop attr_opt;
+variable_declarator ::= IDENTIFIER:id brack_loop attr_opt:exp {:
+	 Variable temp = new Variable((String) id, new Type("null"), (Expression) exp);
+	 RESULT = temp;
+:};
 
 attr_opt ::= 
-	| EQ variable_initializer;
+	| EQ variable_initializer:exp {:
+		RESULT = exp;
+:};
 
 variable_initializer_opt ::=                             
     | variable_initializer_loop comma_opt
 ;
 
 variable_initializer_loop ::=
-    variable_initializer                                    
+    variable_initializer:v {: RESULT = v; :}                                    
     | variable_initializer_loop COMMA variable_initializer
 ;
 
 variable_initializer ::= 
-	expression
-	| LBRACE variable_initializer_opt RBRACE 
-
+	expression:e {: RESULT = e; :}
+	| LBRACE variable_initializer_opt RBRACE
+	| IDENTIFIER:id {:
+		SemanticsImpl.getInstance().validateVariableName(id); 
+		Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id); 
+		RESULT = var.getValue();
+:}
 ;
 
 expression_exp ::=
@@ -443,7 +474,7 @@ literal_expression ::=
 	INTEGER_LITERAL {::}
 	| FLOATING_POINT_LITERAL {::}
 	| BOOLEAN_LITERAL {::}
-	| STRING_LITERAL {::}
+	| STRING_LITERAL:s {: RESULT = new Expression(new Type("String"), s.toString()); :}
 	| CHARACTER_LITERAL {::}
 	| NULL_LITERAL {::}
 ;
@@ -502,7 +533,7 @@ logical_op ::=
 ;
 
 entity_name ::=
-	IDENTIFIER 
+	IDENTIFIER:id {: RESULT = id; :}
 	| entity_name DOT IDENTIFIER
 ;
 
@@ -512,18 +543,18 @@ attribution ::= IDENTIFIER EQ expression;
 
 comma_opt ::= | COMMA;
 
-type ::= type_specifier brack_loop;
+type ::= type_specifier:t brack_loop {: RESULT = t; :};
 
 identifier_opt ::= | IDENTIFIER;
 
 statement ::= 
-	variable_declaration
-	| expression SEMICOLON
-	| statement_block
-	| if_statement
-	| do_statement
-	| while_statement
-	| for_statement
+	variable_declaration:vd {: RESULT = vd; :}
+	| expression:e SEMICOLON {: RESULT = e; :}
+	| statement_block:std {: RESULT = std; :}
+	| if_statement:ist {: RESULT = ist; :}
+	| do_statement:dstm {: RESULT = dstm; :}
+	| while_statement:wstm {: RESULT = wstm; :}
+	| for_statement:form {: RESULT = form; :}
 	| try_statement
 	| switch_statement
 	| SYNCHRONIZED LPAREN expression RPAREN statement
@@ -572,9 +603,15 @@ do_statement ::=
 	DO statement WHILE LPAREN expression RPAREN SEMICOLON
 ;
 
-statement_block ::= LBRACE RBRACE | LBRACE statement_loop RBRACE;
+statement_block ::= LBRACE RBRACE | LBRACE statement_loop:st RBRACE {:
+	RESULT = st;
+:};
 
-statement_loop ::= statement | statement_loop statement;
+statement_loop ::= statement:st {:
+	RESULT = st;
+:} | statement_loop statement:st {:
+	RESULT = st;
+:};
 
 for_statement ::= 
 	header_for expression SEMICOLON expression SEMICOLON RPAREN statement 
@@ -596,13 +633,22 @@ init_test_upd ::=
 expression_opt ::= 
 	| expression;
 
-termination_opt ::= statement_block | SEMICOLON;
+termination_opt ::= statement_block:st {:
+	RESULT = st;
+:} | SEMICOLON;
 
-parameter ::= type IDENTIFIER brack_loop;
+parameter ::= type:t IDENTIFIER:id brack_loop {:
+	RESULT = new Variable(id, (Type) t);
+:};
 
-parameter_list_opt ::= | parameter_list;
+parameter_list_opt ::= | parameter_list:p1 {: RESULT = p1; :};
 
-parameter_list ::= parameter | parameter_list COMMA parameter;
+parameter_list ::= parameter:p {:
+	RESULT = ListCreator.newList(p);
+:} | parameter_list:p1 COMMA parameter:p {:
+	((ArrayList<Parameter>) p1).add((Parameter)p); 
+	RESULT = p1;
+:};
 
 arglist ::= 
 	| expression_loop

@@ -3,7 +3,7 @@ package examples;
 import java.lang.String;
 import java.util.*;
 
-public class Code implements Arvore {
+public class Code extends Code {
 
 	public Code() {
 		
@@ -11,7 +11,7 @@ public class Code implements Arvore {
 	
 	/** Este comentario precisa ser ignorado */
 	public int metodo(int numero, String palavra) {
-		int variavel = 3 + 5.555;
+		variavel = 3 + 5.555;
 		
 		int d = variavel >> 2;
         int e = variavel >>> 3;

@@ -16,7 +16,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		Long initialTime = System.currentTimeMillis();
-		
+	
 		String rootPath = Paths.get("").toAbsolutePath().toString();
 		String filePath = "/examples/";
 		String sourcecode = rootPath + filePath + "code.txt";

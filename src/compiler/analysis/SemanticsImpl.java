@@ -5,8 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import compiler.core.Expression;
+import compiler.core.Parameter;
 import compiler.core.Type;
+import compiler.core.Variable;
+import compiler.exceptions.InvalidFunctionException;
+import compiler.exceptions.InvalidParameterException;
 import compiler.exceptions.InvalidTypeException;
+import compiler.exceptions.InvalidVariableException;
 
 public class SemanticsImpl implements Semantics {
 	private static SemanticsImpl instance;
@@ -49,25 +55,55 @@ public class SemanticsImpl implements Semantics {
 	}
 
 	@Override
+	public void validateFunction(String functionName, ArrayList<Parameter> params, Type declaredType)
+			throws InvalidFunctionException, InvalidParameterException {
+	}
+
+	@Override
+	public void validateVariableName(String variableName) throws InvalidVariableException {		
+	}
+	
+	@Override
+	public Variable findVariableByIdentifier(String variableName) {
+		return null;
+	}
+	
+	@Override
+	public void exitCurrentScope() throws InvalidFunctionException {
+	}
+
+	@Override
+	public void exitCurrentScope(Expression exp) throws InvalidFunctionException {
+	}
+
+	@Override
 	public void addType(Type type) {
 		if (!secondaryTypes.contains(type)) {
 			secondaryTypes.add(type);
+
 			List<String> types = new ArrayList<String>();
 			types.add(type.getTypeName());
-
 			compatibleTypes.put(type.getTypeName(), types);
 		}
 	}
 
 	@Override
 	public void addSuperType(String className, String superClassName) throws InvalidTypeException {
-		if(superClassName != null){
-			if(compatibleTypes.containsKey(superClassName)){
+		if (superClassName != null) {
+			if (compatibleTypes.containsKey(superClassName)) {
 				compatibleTypes.get(superClassName).add(className);
 				return;
 			}
-			throw new InvalidTypeException("Superclass doesn't exist");
+			throw new InvalidTypeException("A Superclasse não existe.");
 		}
+	}
+
+	@Override
+	public void addVariablesFromTempList(Type type) throws Exception {
+	}
+
+	@Override
+	public void addVariableToTempList(Variable var) {
 	}
 
 	@SuppressWarnings("serial")
