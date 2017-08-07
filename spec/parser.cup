@@ -172,6 +172,7 @@ non terminal string_op;
 non terminal test_op;
 non terminal bit_op;
 non terminal logical_op;
+non terminal eq_op;
 
 non terminal brack;
 non terminal brack_loop;
@@ -295,8 +296,13 @@ package_declaration_opt ::= | package_statement;
 import_statement_loop ::= import_statement 
 	| import_statement import_statement_loop;
 
-import_statement ::= IMPORT import_aux SEMICOLON;
-import_aux ::= entity_name DOT MULT | entity_name;
+import_statement ::= IMPORT import_aux:iaux SEMICOLON {:
+					SemanticsImpl.getInstance().addType(new Type(((String) iaux))); :}
+; 
+import_aux ::= 
+	entity_name:en DOT MULT 			{: RESULT = en; :} 
+	| entity_name:en					{: RESULT = en; :}
+;
 
 type_declaration ::= class_declaration | interface_declaration;
 
@@ -351,16 +357,19 @@ declarations ::=
 	| variable_declaration
 ;
 
-method_declaration ::= modifier_loop type:t IDENTIFIER:id 
-					LPAREN parameter_list_opt:p RPAREN {:
-	SemanticsImpl.getInstance().validateFunction(id, (ArrayList<Parameter>) p, (Type) t);
-:} termination_opt:to {:
-	if(to instanceof Expression){
-		SemanticsImpl.getInstance().exitCurrentScope((Expression) to);
-	} else {
-		SemanticsImpl.getInstance().exitCurrentScope();
-	}
-:};
+method_declaration ::= 
+	modifier_loop type:t IDENTIFIER:id 
+	LPAREN parameter_list_opt:p RPAREN {:
+		SemanticsImpl.getInstance().validateFunction(id, (ArrayList<Parameter>) p, (Type) t); 
+	:} 
+	termination_opt:to {:
+		if(to instanceof Expression){
+			SemanticsImpl.getInstance().exitCurrentScope((Expression) to);
+		} else {
+			SemanticsImpl.getInstance().exitCurrentScope();
+		}
+	:}
+;
 
 constructor_declaration ::= modifier_loop IDENTIFIER LPAREN parameter_list_opt RPAREN statement_block;
 
@@ -408,14 +417,25 @@ variable_initializer ::=
 ;
 
 expression_exp ::=
-	LPAREN arglist RPAREN
-    | LBRACK expression RBRACK  
-    | DOT expression  
-    | COMMA expression  
-    | INSTANCEOF entity_name
+	LPAREN arglist:args RPAREN		{: RESULT = args; :}
+    | LBRACK expression:e RBRACK	{: RESULT = e; :}
+    | DOT expression:e				{: RESULT = e; :}
+    | COMMA expression:e			{: RESULT = e; :}
+    | INSTANCEOF entity_name:en		{: RESULT = en; :}
 ;
 
-call_method ::= IDENTIFIER LPAREN arglist RPAREN;
+call_method ::= 
+	IDENTIFIER:id LPAREN 
+	arglist:args RPAREN		{: 
+		if (args != null) {
+			SemanticsImpl.getInstance().verifyCallMethod((String) id, (ArrayList<Expression>) args);
+			RESULT = id;
+		} else {
+		    SemanticsImpl.getInstance().verifyCallMethod((String) id, new ArrayList<Expression>());
+			RESULT = id;
+		}
+	:}
+;
 
 numeric_expression ::= 
 	MINUS expression 
@@ -433,13 +453,32 @@ testing_expression ::=
 ;
 
 logical_expression ::= 
-	NOT expression
-	| expression logical_op expression 
-	| expression QUESTION expression COLON expression
-	| BOOLEAN_LITERAL;
+	NOT:op expression:e 
+	{: 
+		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e).getType());
+		RESULT = e; 
+	:}
+	| expression:e1 logical_op:lo expression:e2
+	{:
+		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e1).getType());
+		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e2).getType());
+	:}
+	| expression:e1 QUESTION expression:e2 COLON expression:e3 
+	{: 
+		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e1).getType());
+		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e2).getType());
+		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e3).getType());
+	:}
+	| BOOLEAN_LITERAL:bl {: RESULT = new Expression(new Type("boolean"), bl.toString()); :}
+;
 
 casting_expression ::= 
-	LPAREN type RPAREN expression
+	LPAREN type:t RPAREN expression:e 
+	{:
+		SemanticsImpl.getInstance().checkTypeCompatibility((Type)t, ((Expression)e).getType());
+		((Expression) e).setType((Type) t);
+		RESULT = e; 
+	:}
 ;
 
 creating_expression ::= NEW creating_expression_termination;
@@ -471,12 +510,16 @@ string_expression ::=
 ;
 
 literal_expression ::= 
-	INTEGER_LITERAL {::}
-	| FLOATING_POINT_LITERAL {::}
-	| BOOLEAN_LITERAL {::}
-	| STRING_LITERAL:s {: RESULT = new Expression(new Type("String"), s.toString()); :}
-	| CHARACTER_LITERAL {::}
-	| NULL_LITERAL {::}
+	INTEGER_LITERAL:il {: RESULT = new Expression(new Type("int"), il.toString()); :}
+	| FLOATING_POINT_LITERAL:fl {: RESULT = new Expression(new Type("float"), fl.toString()); :}
+	| BOOLEAN_LITERAL:bl 
+	{: 
+		RESULT = new Expression(new Type("boolean"), bl.toString()); 
+		SemanticsImpl.getInstance().setCurrentOperator(bl);
+	:}
+	| STRING_LITERAL:sl {: RESULT = new Expression(new Type("String"), sl.toString()); :}
+	| CHARACTER_LITERAL:cl {: RESULT = new Expression(new Type("char"), cl.toString()); :}
+	| NULL_LITERAL:nl {: RESULT = new Expression(new Type("null"), "null"); :}
 ;
 
 test_op ::= 
@@ -488,20 +531,21 @@ test_op ::=
 	| NOTEQ;
 
 between_op ::= 
-	PLUS
-	| PLUSEQ
-	| MINUS
-	| MINUSEQ
-	| MULT
-	| MULTEQ
-	| DIV
-	| DIVEQ
-	| MOD
-	| MODEQ;
+	PLUS		{: RESULT = "+"; :}
+	| PLUSEQ	{: RESULT = "+="; :}
+	| MINUS		{: RESULT = "-"; :}
+	| MINUSEQ	{: RESULT = "-="; :}
+	| MULT		{: RESULT = "*"; :}
+	| MULTEQ	{: RESULT = "*="; :}
+	| DIV		{: RESULT = "/"; :}
+	| DIVEQ		{: RESULT = "/="; :}
+	| MOD		{: RESULT = "%"; :}
+	| MODEQ		{: RESULT = "%="; :}
+;	
 
 pre_pos_op ::= 
-	PLUSPLUS 
-	| MINUSMINUS;
+	PLUSPLUS:pp {: RESULT = pp; :}
+	| MINUSMINUS:mm {: RESULT = mm; :};
 
 type_specifier ::= BOOLEAN {:RESULT = new Type("boolean");:}
 	| BYTE {:RESULT = new Type("byte");:}		                                                            
@@ -533,13 +577,37 @@ logical_op ::=
 ;
 
 entity_name ::=
-	IDENTIFIER:id {: RESULT = id; :}
-	| entity_name DOT IDENTIFIER
+	IDENTIFIER:id 					{: RESULT = id; :}
+	| entity_name DOT IDENTIFIER:id {: RESULT = id; :}
 ;
 
 static_initializer ::= STATIC statement_block;
 
-attribution ::= IDENTIFIER EQ expression;
+attribution ::= IDENTIFIER:id eq_op:eo expression:e
+	{:
+		if(e instanceof String) { 
+			SemanticsImpl.getInstance().checkVariableAttribution(id, (String) e);
+			Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id);
+		} else {
+			SemanticsImpl.getInstance().checkVariableAttribution(id, (Expression) e); 
+			Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id);
+
+			RESULT = e;
+		}
+	:}
+;
+
+eq_op ::= 
+	PLUSEQ:op {: RESULT = "+="; :}
+	| MINUSEQ:op {: RESULT = "-="; :}
+	| MULTEQ:op {: RESULT = "*="; :}
+	| DIVEQ:op {: RESULT = "/="; :}
+	| MODEQ:op {: RESULT = "%="; :}
+	| ANDEQ:op {: RESULT = "&=";:}
+	| OREQ:op {: RESULT = "|=";:}
+	| XOREQ:op {: RESULT = "^=";:}
+	| EQ:op {: RESULT = "="; :}
+;
 
 comma_opt ::= | COMMA;
 
@@ -558,7 +626,10 @@ statement ::=
 	| try_statement
 	| switch_statement
 	| SYNCHRONIZED LPAREN expression RPAREN statement
-	| RETURN expression_opt SEMICOLON
+	| RETURN expression_opt:ep SEMICOLON	{: 
+			((Expression) ep).setContext("return");
+			RESULT = ep; 
+		:}
 	| THROW expression SEMICOLON
 	| IDENTIFIER COLON statement
 	| BREAK identifier_opt SEMICOLON
@@ -614,7 +685,7 @@ statement_loop ::= statement:st {:
 :};
 
 for_statement ::= 
-	header_for expression SEMICOLON expression SEMICOLON RPAREN statement 
+	header_for: expression SEMICOLON expression SEMICOLON RPAREN statement 
 	| header_for expression SEMICOLON RPAREN statement 
 	| header_for SEMICOLON RPAREN statement 
 	| header_for expression SEMICOLON expression RPAREN statement
@@ -633,9 +704,12 @@ init_test_upd ::=
 expression_opt ::= 
 	| expression;
 
-termination_opt ::= statement_block:st {:
-	RESULT = st;
-:} | SEMICOLON;
+termination_opt ::= statement_block:st 
+	{:
+		RESULT = st;
+	:} 
+	| SEMICOLON
+;
 
 parameter ::= type:t IDENTIFIER:id brack_loop {:
 	RESULT = new Variable(id, (Type) t);
@@ -651,31 +725,40 @@ parameter_list ::= parameter:p {:
 :};
 
 arglist ::= 
-	| expression_loop
+	| expression_loop:el	{: RESULT = el; :}
 ;
 
 expression_loop ::=
-    expression                                                            
-    | expression_loop COMMA expression                                                                                            
+    expression:e	{: RESULT = ListCreator.newList(e); :}
+    | expression_loop:el COMMA expression:e	
+    {: 
+		((ArrayList<Expression>) el).add((Expression)e);
+		RESULT = e;
+	:}                                                                                            
 ;
 
 expression ::= 
-	numeric_expression
-	| testing_expression
-	| logical_expression
-	| string_expression
-	| bit_expression
-	| casting_expression
-	| creating_expression
-	| literal_expression
-	| NULL_LITERAL
-	| SUPER
-	| THIS
-	| IDENTIFIER 
-	| attribution
-	| call_method
-	| LPAREN expression RPAREN
-	| expression expression_exp
+	numeric_expression:ne			{: RESULT = ne; :}
+	| testing_expression:te			{: RESULT = te; :}
+	| logical_expression:lge		{: RESULT = lge; :}
+	| string_expression:se			{: RESULT = se; :}
+	| bit_expression:be				{: RESULT = be; :}
+	| casting_expression:ce			{: RESULT = ce; :}
+	| creating_expression:cte		{: RESULT = cte; :}
+	| literal_expression:le			{: RESULT = le; :}
+	| NULL_LITERAL:nl				{: RESULT = nl; :}
+	| SUPER:su						{: RESULT = su; :}
+	| THIS:th						{: RESULT = th; :}
+	| IDENTIFIER:id					
+	{: 
+		SemanticsImpl.getInstance().validateVariableName(id);
+		Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id); 
+		RESULT = var.getValue(); 
+	:}
+	| attribution:attr				{: RESULT = attr; :}
+	| call_method:cm				{: RESULT = cm; :}
+	| LPAREN expression:e1 RPAREN	{: RESULT = e1; :}
+	| expression:e2 expression_exp	{: RESULT = e2; :}
 ;
 
 brack ::= LBRACK RBRACK;
