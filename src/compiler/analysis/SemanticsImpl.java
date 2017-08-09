@@ -7,15 +7,18 @@ import java.util.Map;
 import java.util.Stack;
 
 import compiler.core.Expression;
+import compiler.core.For;
 import compiler.core.Function;
 import compiler.core.Parameter;
 import compiler.core.ScopedEntity;
 import compiler.core.Type;
 import compiler.core.Variable;
 import compiler.exceptions.InvalidFunctionException;
+import compiler.exceptions.InvalidOperationException;
 import compiler.exceptions.InvalidParameterException;
 import compiler.exceptions.InvalidTypeException;
 import compiler.exceptions.InvalidVariableException;
+import util.Calculator;
 
 public class SemanticsImpl implements Semantics {
 	private static SemanticsImpl instance;
@@ -27,10 +30,15 @@ public class SemanticsImpl implements Semantics {
 	private ArrayList<Function> functions;
 	private HashMap<String, Variable> vars;
 	private static String currentOperator;
+	private static Calculator calculator;
+    public static boolean isForExp;
+    public int nfor = 0;
 
 	public static SemanticsImpl getInstance() {
 		if (instance == null) {
 			instance = new SemanticsImpl();
+			calculator = new Calculator();
+			isForExp = false;
 		}
 		return instance;
 	}
@@ -76,7 +84,27 @@ public class SemanticsImpl implements Semantics {
 
 	@Override
 	public void validateFunction(String functionName, ArrayList<Parameter> params, Type declaredType)
-			throws InvalidFunctionException, InvalidParameterException {
+			throws InvalidFunctionException, InvalidParameterException, Exception {
+		if(declaredType == null){
+            throw new InvalidFunctionException("ERRO: O método " + functionName +
+                    " está sem declaração do tipo de retorno, ou se possui, não contem retorno no seu fim!");
+        }
+        Function temp = new Function(functionName, params);
+        temp.setDeclaredReturnType(declaredType);
+        
+        if(checkFunctionExistence(temp)) {
+            if(params != null){
+                checkExistingParameter(params);
+            }
+            
+            String keyFunc = functionName + " ";
+            if(params != null) {
+                for (Parameter p : params) {
+                    keyFunc += p.getType().getTypeName();
+                }
+            }
+            addFunctionAndNewScope(temp);
+        }
 	}
 
 	@Override
@@ -166,12 +194,51 @@ public class SemanticsImpl implements Semantics {
 		scopedEntities.push(scope);
 	}
 	
+	public void addFunctionAndNewScope(Function f) throws Exception {
+        functions.add(f);
+        createNewScope(f);
+        if(f.getParams() != null) {
+            for (Parameter p : f.getParams()) {
+                addVariable((Variable) p);
+            }
+        }
+    }
+	
+	private void createNewScope(ScopedEntity scope) {
+        scopedEntities.push(scope);
+    }
+	
 	public void checkIsBoolean(Type type) throws InvalidTypeException {
 		if (!checkTypeCompatibility(new Type("boolean"), type)) {
 			throw new InvalidTypeException("ExpressÃµes lÃ³gicas precisam ser entre booleanos.");
 		}
 	}
 
+	public boolean checkFunctionExistence(Function temp) throws InvalidFunctionException {
+        for(Function fun : functions){
+            if(fun.getName().equals(temp.getName())) {
+                if(!fun.getDeclaredReturnType().getTypeName().equals(temp.getDeclaredReturnType().getTypeName())){
+                    throw new InvalidFunctionException("ERRO: O método "+temp.getName()+" ja foi declarado com um tipo de retorno diferente!");
+                }
+                if(temp.equals(fun)){
+                    throw new InvalidFunctionException("ERRO: O método " + temp.getName() + " ja foi declarado com esses mesmos parâmetros!");
+                }
+
+            }
+        }
+        return true;
+    }
+
+	private void checkExistingParameter(ArrayList<Parameter> params) throws InvalidParameterException {
+        for(int i=0; i<params.size();i++){
+            for(int k=i+1;k<params.size();k++){
+                if(params.get(i).getIdentifier().equals(params.get(k).getIdentifier())){
+                    throw new InvalidParameterException("ERRO: O parâmetro: "+params.get(k).getIdentifier()+ " ja foi definido.");
+                }
+            }
+        }
+    }
+	
 	public boolean checkVariableExistence(String variableName) {
 		if (!scopedEntities.isEmpty() && getCurrentScope().getVars().get(variableName) != null) {
 			return true;
@@ -244,6 +311,43 @@ public class SemanticsImpl implements Semantics {
 		}
 	}
 
+	public void createFor(Variable var, Expression e1, Expression e2) throws InvalidTypeException, InvalidOperationException {
+		For f = new For("For");
+
+        for(Variable v: getCurrentScope().getVars().values()){
+            f.addVariable(v);
+        }
+        
+        if(var != null){
+            f.addVariable(var);
+        }
+        
+        if(e1 != null){
+            if(!e1.getType().getTypeName().equals("boolean")) {
+                throw new InvalidTypeException("ERROR: O valor para a expressão deveria ser boolean, porém é do tipo "
+                        + e1.getType().getTypeName());
+            }
+            isForExp = false;
+        }
+        
+        if(e2 != null){
+            if(e2.getType().getTypeName().equals("boolean")){
+                throw new InvalidTypeException("ERROR: A expressão deveria ser aritimética, porém é uma expressão booleana");
+            }
+        }
+
+        if(var != null){
+            getCurrentScope().getVars().remove(var.getIdentifier());
+        }
+
+        scopedEntities.push(f);
+	}
+	
+	public void dismissCurrentFor(Expression aexp) throws InvalidFunctionException, InvalidOperationException, InvalidTypeException {
+        nfor--;
+        ScopedEntity scoped = scopedEntities.pop();
+    }
+	
 	public boolean verifyCallMethod(String methodName, ArrayList<Expression> argList) throws InvalidFunctionException {
 		boolean isCorrectParams = false;
 
@@ -313,11 +417,83 @@ public class SemanticsImpl implements Semantics {
 			}
 		}
 	}
+	
+	public Expression getExpression(Expression le, String md, Expression re)
+			throws InvalidTypeException, InvalidOperationException {
+		if (checkTypeCompatibility(le.getType(), re.getType())
+				|| checkTypeCompatibility(re.getType(), le.getType())) {
+			Type newType = getMaxType(le.getType(), re.getType());
+			String result;
+			switch (md) {
+				case "+":
+					result = calculator.getSumNumericValue(le, re, md);
+					return new Expression(newType, result);
+				case "-":
+					result = calculator.getSubNumericValue(le, re, md);
+					return new Expression(newType, result);
+				case "*":
+					result = calculator.getMultNumericValue(le, re, md);
+					return new Expression(newType, result);
+				case "/":
+					result = calculator.getDivNumericValue(le, re, md);
+					return new Expression(newType, result);
+				default:
+					break;
+			}
+			return new Expression(newType);
+		}
+		throw new InvalidTypeException("Not allowed!");
+	}
 
+	private Type getMaxType(Type type1, Type type2) {
+		return compatibleTypes.get(type1.getTypeName()).contains(type2.getTypeName()) ? type1
+				: type2;
+	}
+	
 	public void setCurrentOperator(boolean newCurrentOperator){
 		currentOperator = newCurrentOperator+"";
 	}
 	
+	public boolean isRelationalExpression(Expression le, Expression re) throws InvalidOperationException {
+        if(!le.getType().equals(re.getType())){
+            throw new InvalidOperationException("ERROR: A expressão não é relacional, que é formada pelas subexpressões de valor " + le.getValue() + " do tipo "
+                    + le.getType().getTypeName() +" e de valor " + re.getValue() + " do tipo " + re.getType().getTypeName());
+        }
+        return true;
+    }
+	
+	public boolean isNumericExpression(Expression e)
+            throws InvalidOperationException {
+        if (!e.isNumeric()) {
+            throw new InvalidOperationException("ERROR: A expressão de tipo '"+e.getType()+"' e valor '"+e.getValue()+"' não é numérica");
+        }
+        return true;
+    }
+
+    public boolean isNumericExpression(Expression e1, Expression e2) throws InvalidOperationException{
+        if(e1 != null && e1.isNumeric()){
+            if(e2 != null && e2.isNumeric()){
+                return true;
+            }
+        }else if(isStringExpression(e1,e2)){
+            return true;
+        }
+        throw new InvalidOperationException("ERROR: A expressão não é numérica ou entre strings,'" + e1.getValue() + "' com tipo '" + e1.getType().getTypeName() +
+                "' e/ou a expressão " + e2.getValue() + " com tipo '"+ e2.getType().getTypeName());
+    }
+	
+    public boolean isStringExpression(Expression le, Expression re) throws InvalidOperationException {
+        if(le != null && le.getType().getTypeName().equalsIgnoreCase("String")) {
+            return true;
+        }
+        
+        if(re != null && re.getType().getTypeName().equalsIgnoreCase("String")) {
+            return true;
+        }
+
+        return false;
+    }
+    
 	private static void initCompatibleTypes() {
 		List<String> doubleCompTypes = new ArrayList<String>();
 		doubleCompTypes.add("int");

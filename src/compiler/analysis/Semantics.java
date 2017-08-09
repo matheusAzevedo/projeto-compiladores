@@ -16,7 +16,7 @@ public interface Semantics {
 	public boolean checkValidExistingType(Type type);
 	public boolean checkTypeCompatibility(Type leftType, Type rightType);
 	
-	public void validateFunction(String functionName, ArrayList<Parameter> params, Type declaredType) throws InvalidFunctionException, InvalidParameterException;
+	public void validateFunction(String functionName, ArrayList<Parameter> params, Type declaredType) throws InvalidFunctionException, InvalidParameterException, Exception;
 	public void validateVariableName(String variableName) throws InvalidVariableException;
 	
 	public Variable findVariableByIdentifier(String variableName);

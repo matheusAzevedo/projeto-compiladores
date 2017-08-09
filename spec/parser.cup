@@ -438,10 +438,26 @@ call_method ::=
 ;
 
 numeric_expression ::= 
-	MINUS expression 
-	| pre_pos_op expression
-	| expression pre_pos_op
-	| expression between_op expression 
+	MINUS expression:e 					
+	{: 
+		SemanticsImpl.getInstance().isNumericExpression((Expression) e);
+ 		RESULT = e; 
+	:}
+	| pre_pos_op expression:e 					
+	{: 
+		SemanticsImpl.getInstance().isNumericExpression((Expression) e);
+ 		RESULT = e; 
+	:}
+	| expression:e pre_pos_op 					
+	{: 
+		SemanticsImpl.getInstance().isNumericExpression((Expression) e);
+ 		RESULT = e; 
+	:}
+	| expression:e1 between_op expression:e2 					
+	{: 
+		SemanticsImpl.getInstance().isNumericExpression((Expression) e1, (Expression) e2);
+ 		RESULT = e1; 
+	:}
 ;
 
 bit_expression ::= 
@@ -523,12 +539,13 @@ literal_expression ::=
 ;
 
 test_op ::= 
-	LT
-	| GT
-	| LTEQ
-	| GTEQ
-	| EQEQ
-	| NOTEQ;
+	LT			{: RESULT = "<"; :}
+	| GT		{: RESULT = ">"; :}
+	| LTEQ		{: RESULT = "<="; :}
+	| GTEQ		{: RESULT = ">="; :}
+	| EQEQ		{: RESULT = "=="; :}
+	| NOTEQ		{: RESULT = "!="; :}
+;
 
 between_op ::= 
 	PLUS		{: RESULT = "+"; :}
@@ -563,17 +580,17 @@ type_specifier ::= BOOLEAN {:RESULT = new Type("boolean");:}
 ;
 
 logical_op ::=
-	AND
-	| ANDEQ
-	| OR
-	| OROR
-	| OREQ
-	| XOR
-	| XOREQ
-	| ANDAND
-	| OROREQ
-	| MOD
-	| MODEQ
+	AND			{: RESULT = "&"; :}
+	| ANDEQ		{: RESULT = "&="; :}
+	| OR		{: RESULT = "|"; :}
+	| OROR		{: RESULT = "||"; :}
+	| OREQ		{: RESULT = "|="; :}
+	| XOR		{: RESULT = "^"; :}
+	| XOREQ		{: RESULT = "^="; :}
+	| ANDAND	{: RESULT = "&&"; :}
+	| OROREQ	{: RESULT = "||="; :}
+	| MOD		{: RESULT = "%"; :}
+	| MODEQ		{: RESULT = "%="; :}
 ;
 
 entity_name ::=
@@ -685,24 +702,58 @@ statement_loop ::= statement:st {:
 :};
 
 for_statement ::= 
-	header_for: expression SEMICOLON expression SEMICOLON RPAREN statement 
-	| header_for expression SEMICOLON RPAREN statement 
-	| header_for SEMICOLON RPAREN statement 
-	| header_for expression SEMICOLON expression RPAREN statement
+	header_for:hf SEMICOLON expression_opt:eo 
+	{:
+	  	SemanticsImpl.getInstance().createFor((Variable) hf, null, (Expression) eo);
+	:}
+	SEMICOLON RPAREN statement 
+	{:
+		SemanticsImpl.getInstance().dismissCurrentFor((Expression) eo);
+	:}
+	| header_for:hf expression_opt:eo 
+	{:
+		SemanticsImpl.getInstance().createFor((Variable) hf, (Expression) eo, null);
+	:}
+	SEMICOLON RPAREN statement
+	{:
+		SemanticsImpl.getInstance().dismissCurrentFor(null);
+	:}
+	| header_for:hf SEMICOLON RPAREN 
+	{:
+		SemanticsImpl.getInstance().createFor((Variable) hf, null, null);
+	:}
+	statement
+	{:
+		SemanticsImpl.getInstance().dismissCurrentFor(null);
+	:}
+	| header_for:hf expression_opt:eo1 SEMICOLON expression_opt:eo2 RPAREN
+	{:
+	  	SemanticsImpl.getInstance().createFor((Variable) hf, (Expression) eo1, (Expression) eo2);
+	:} 
+	statement
+	{:
+		SemanticsImpl.getInstance().dismissCurrentFor((Expression) eo2);
+	:}
 ;
 
 header_for ::= 
-	FOR LPAREN init_test_upd	
+	FOR LPAREN init_test_upd:it		
+	{: 
+		SemanticsImpl.getInstance().isForExp = true;
+		SemanticsImpl.getInstance().nfor++; 
+		RESULT = it;
+	:}	
 ;
 
 init_test_upd ::= 
-	| variable_declaration
-	| expression_opt SEMICOLON
+	| variable_declaration:vd		{: RESULT= vd; :}
+	| expression_opt:eo SEMICOLON	{: RESULT= eo; :}
 	| SEMICOLON
 ;
 
 expression_opt ::= 
-	| expression;
+	| expression:e	{: RESULT = e; :}
+;
 
 termination_opt ::= statement_block:st 
 	{:
