@@ -313,7 +313,9 @@ class_declaration ::= modifier CLASS IDENTIFIER:id {:
 					extends_declaration_opt:superclass {:
 						SemanticsImpl.getInstance().addSuperType((String) id, (String) superclass);
 					:} 
-					implements_declaration_opt LBRACE field_declaration_loop RBRACE
+					implements_declaration_opt LBRACE field_declaration_loop RBRACE {:
+						SemanticsImpl.getInstance().getCodeGenerator().generateFinalAssemblyCode();
+					:}
 ;
 
 extends_interface_opt ::= | EXTENDS implements_declaration_loop;
