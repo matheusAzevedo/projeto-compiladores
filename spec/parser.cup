@@ -741,7 +741,7 @@ for_statement ::=
 header_for ::= 
 	FOR LPAREN init_test_upd:it		
 	{: 
-		SemanticsImpl.getInstance().isForExp = true;
+		SemanticsImpl.getInstance().setForExp(true);
 		SemanticsImpl.getInstance().nfor++; 
 		RESULT = it;
 	:}	
