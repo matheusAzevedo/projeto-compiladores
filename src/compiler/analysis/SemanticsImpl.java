@@ -113,7 +113,7 @@ public class SemanticsImpl implements Semantics {
 	@Override
 	public void validateVariableName(String variableName) throws InvalidVariableException {
 		if (!checkVariableExistence(variableName)) {
-			throw new InvalidVariableException("ERROR: A variavel chamada " + variableName + " nÃ£o existe!");
+			throw new InvalidVariableException(" A variavel chamada " + variableName + " nÃ£o existe!");
 		}
 	}
 
@@ -128,10 +128,25 @@ public class SemanticsImpl implements Semantics {
 
 	@Override
 	public void exitCurrentScope() throws InvalidFunctionException {
+		ScopedEntity scopedEntity = scopedEntities.pop();
+		checkDeclaredAndReturnedType(scopedEntity.getName(), ((Function) scopedEntity).getDeclaredReturnType(), null);
 	}
 
 	@Override
 	public void exitCurrentScope(Expression exp) throws InvalidFunctionException {
+		ScopedEntity scoped = scopedEntities.pop();
+		if (scoped instanceof Function) {
+			if (exp != null) {
+				checkDeclaredAndReturnedType(scoped.getName(),
+						((Function) scoped).getDeclaredReturnType(), exp);
+			} else {
+				if (!((Function) scoped).getDeclaredReturnType().equals(
+						new Type("void"))) {
+					throw new InvalidFunctionException("ERROR: A função " + scoped.getName()
+							+ " precisa retornar o tipo da variável.");
+				}
+			}
+		}
 	}
 
 	@Override
@@ -152,7 +167,7 @@ public class SemanticsImpl implements Semantics {
 				compatibleTypes.get(superClassName).add(className);
 				return;
 			}
-			throw new InvalidTypeException("A Superclasse nÃ£o existe.");
+			throw new InvalidTypeException("A Superclasse não existe.");
 		}
 	}
 
@@ -189,10 +204,21 @@ public class SemanticsImpl implements Semantics {
 		};
 	}
 
+	
+	
 	public ScopedEntity getCurrentScope() {
 		return scopedEntities.peek();
 	}
 
+	public String getFunctionType(String variableName) {
+        for(Function f : functions){
+            if (f.getName().equals(variableName)){
+                return f.getDeclaredReturnType().getTypeName();
+            }
+        }
+        return null;
+    }
+	
 	private void createScope(ScopedEntity scope) {
 		scopedEntities.push(scope);
 	}
@@ -210,6 +236,36 @@ public class SemanticsImpl implements Semantics {
 	private void createNewScope(ScopedEntity scope) {
 		scopedEntities.push(scope);
 	}
+	
+	private void checkDeclaredAndReturnedType(String functionName, Type declaredType, Expression exp) throws InvalidFunctionException {
+        if(exp == null && declaredType.equals(new Type("void"))) {
+        	return;
+        }
+        
+        if(exp == null && !declaredType.equals(new Type("void"))) {
+        	throw new InvalidFunctionException("A função '" + functionName + "' não tem retorno.");
+        }
+
+		boolean isReturn = exp.getContext().equalsIgnoreCase("return");
+        
+        if(!declaredType.equals(new Type("void"))) {
+            if(!isReturn) {
+            	throw new InvalidFunctionException("A função '" + functionName + "' não tem retorno.");
+            }
+            
+            if (!declaredType.equals(exp.getType()) && !checkTypeCompatibility(declaredType,exp.getType())) {
+                throw new InvalidFunctionException("A função " + functionName
+                        + " não retornou o tipo esperado: " + declaredType);
+            }
+            
+        } else {
+            if(isReturn) {
+                if(exp.getType() != null) {
+                    throw new InvalidFunctionException("A função '" + functionName + "' é 'void' e não deve ter retorno.");
+                }
+            }
+        }
+    }
 
 	public void checkIsBoolean(Type type) throws InvalidTypeException {
 		if (!checkTypeCompatibility(new Type("boolean"), type)) {
@@ -391,7 +447,7 @@ public class SemanticsImpl implements Semantics {
 			throws InvalidVariableException, InvalidTypeException, InvalidFunctionException {
 		if (!checkVariableExistence(id)) {
 			throw new InvalidVariableException(
-					"ERROR: A variavel chamada " + id + " e com valor " + expression.getValue() + " nÃ£o existe!");
+					"ERROR: A variavel chamada " + id + " e com valor " + expression.getValue() + " não existe!");
 		}
 		if (!checkValidExistingType(expression.getType())) {
 			if (!expression.getType().getTypeName().equals("null")) {
@@ -401,7 +457,7 @@ public class SemanticsImpl implements Semantics {
 		}
 		Type identifierType = findVariableByIdentifier(id).getType();
 		if (!checkTypeCompatibility(identifierType, expression.getType())) {
-			String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s nÃ£o e  compativel com %s",
+			String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s não e  compativel com %s",
 					identifierType, expression.getType());
 			throw new InvalidFunctionException(exceptionMessage);
 		}
@@ -522,15 +578,27 @@ public class SemanticsImpl implements Semantics {
 
 		List<String> intCompTypes = new ArrayList<String>();
 		intCompTypes.add("int");
+        intCompTypes.add("Integer");
 
 		List<String> booleanCompTypes = new ArrayList<String>();
 		booleanCompTypes.add("boolean");
+		
+		List<String> stringCompTypes = new ArrayList<String>();
+        stringCompTypes.add("int");
+        stringCompTypes.add("double");
+        stringCompTypes.add("long");
+        stringCompTypes.add("float");
+        stringCompTypes.add("char");
+        stringCompTypes.add("null");
+        stringCompTypes.add("boolean");
 
 		compatibleTypes.put("double", doubleCompTypes);
 		compatibleTypes.put("float", floatCompTypes);
 		compatibleTypes.put("long", longCompTypes)	;
 		compatibleTypes.put("int", intCompTypes);
 		compatibleTypes.put("boolean", booleanCompTypes);
+		compatibleTypes.put("Integer", intCompTypes);
+		compatibleTypes.put("String", stringCompTypes);
 	}
 
 	public static boolean isForExp() {

@@ -10,10 +10,11 @@ public class Code extends Code {
 	}
 	
 	/** Este comentario precisa ser ignorado */
-	public int metodo(int numero, String palavra) {
+	public String metodo(int numero, String palavra) {
 		int variavel = 3;
 
-		
+        String c = "AaDa";;
+        
 		int d = variavel >> 2;
         int e = variavel >>> 3;
         
@@ -22,6 +23,10 @@ public class Code extends Code {
 		boolean t = true;
         boolean f = false;
         boolean b = t ^ f;
+		
+		String g = "Mauhsuwswijsiks wuhedywghdwujsoqwks dhywgdywqgsuqjsiqjs uwhsdywgduhsiqjsqs**";
+        String h = "!:_)(*&&*)oiiis";
+        
 				
 		for (int i = 0; i < 1; i++) {
 			variavel = 3 + 1;
@@ -52,16 +57,18 @@ public class Code extends Code {
                       break;
         }
         
-         try{
-            if(true){
-            }else if(10<=15){
+         try {
+            if (true) {
+            } else if (10<=15) {
                 "ERRO";
-            }else{
+            } else {
                 null;
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             int erro;
         }
+        
+        return palavra;
 	}
 
 }

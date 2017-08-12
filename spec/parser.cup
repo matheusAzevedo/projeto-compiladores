@@ -375,10 +375,14 @@ method_declaration ::=
 
 constructor_declaration ::= modifier_loop IDENTIFIER LPAREN parameter_list_opt RPAREN statement_block;
 
-variable_declaration ::= modifier_loop type:t variable_declarator_loop:v SEMICOLON {:
-	SemanticsImpl.getInstance().addVariablesFromTempList((Type) t);
-	RESULT = v;
-:};
+variable_declaration ::=
+	type:t variable_declarator_loop:v SEMICOLON
+	 {:
+		SemanticsImpl.getInstance().addVariablesFromTempList((Type) t);
+		RESULT = v;
+	:}
+	| modifier_loop type:t variable_declarator_loop:v SEMICOLON
+;
 
 variable_declarator_loop ::= 
 	variable_declarator:var {:
@@ -610,7 +614,7 @@ attribution ::= IDENTIFIER:id eq_op:eo expression:e
 		} else {
 			SemanticsImpl.getInstance().checkVariableAttribution(id, (Expression) e); 
 			Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id);
-
+			var.setValue((Expression) e);
 			RESULT = e;
 		}
 	:}
@@ -798,18 +802,29 @@ expression ::=
 	| bit_expression:be				{: RESULT = be; :}
 	| casting_expression:ce			{: RESULT = ce; :}
 	| creating_expression:cte		{: RESULT = cte; :}
-	| literal_expression:le			{: RESULT = le; :}
+	| literal_expression:le			
+	{: 
+		RESULT = le; 
+	:}
 	| NULL_LITERAL:nl				{: RESULT = nl; :}
 	| SUPER:su						{: RESULT = su; :}
 	| THIS:th						{: RESULT = th; :}
 	| IDENTIFIER:id					
 	{: 
 		SemanticsImpl.getInstance().validateVariableName(id);
-		Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id); 
-		RESULT = var.getValue(); 
+		Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id);
+
+		if(var.getValue()!=null) {
+            RESULT = new Expression(var.getType(), var.getIdentifier());
+        } else {
+            RESULT = new Expression(var.getType(), var.getIdentifier());
+        }	
 	:}
 	| attribution:attr				{: RESULT = attr; :}
-	| call_method:cm				{: RESULT = cm; :}
+	| call_method:cm				
+	{: 
+    	RESULT = new Expression(new Type((String) SemanticsImpl.getInstance().getFunctionType((String) cm)), (String) cm);
+	:}
 	| LPAREN expression:e1 RPAREN	{: RESULT = e1; :}
 	| expression:e2 expression_exp	{: RESULT = e2; :}
 ;
