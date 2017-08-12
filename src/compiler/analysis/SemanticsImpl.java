@@ -528,7 +528,7 @@ public class SemanticsImpl implements Semantics {
 
 		compatibleTypes.put("double", doubleCompTypes);
 		compatibleTypes.put("float", floatCompTypes);
-		compatibleTypes.put("long", longCompTypes);
+		compatibleTypes.put("long", longCompTypes)	;
 		compatibleTypes.put("int", intCompTypes);
 		compatibleTypes.put("boolean", booleanCompTypes);
 	}
@@ -541,7 +541,7 @@ public class SemanticsImpl implements Semantics {
 		SemanticsImpl.isForExp = isForExp;
 	}
 	
-	public static CodeGenerator getCodeGenerator() {
+	public CodeGenerator getCodeGenerator() {
         return codeGenerator;
     }
 }

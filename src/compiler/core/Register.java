@@ -21,7 +21,8 @@ public enum Register {
 	R18("R18"), 
 	R19("R19"),
 	SP("SP"), 
-	_SP("*SP");
+	_SP("*SP"),
+	SP0("0(SP)");
 	
 	private String value;
 

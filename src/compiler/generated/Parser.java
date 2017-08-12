@@ -5,13 +5,15 @@
 
 package compiler.generated;
 
-import util.Log;
-import util.ListCreator;
-import main.Main;
-import compiler.core.*;
-import compiler.analysis.*;
 import java.util.ArrayList;
-import java_cup.runtime.XMLElement;
+
+import compiler.analysis.SemanticsImpl;
+import compiler.core.Expression;
+import compiler.core.Parameter;
+import compiler.core.Type;
+import compiler.core.Variable;
+import main.Main;
+import util.ListCreator;
 
 /** CUP v0.11b 20160615 (GIT 4ac7450) generated parser.
   */
@@ -959,7 +961,7 @@ public class Parser extends java_cup.runtime.lr_parser {
 
 
 /** Cup generated class to encapsulate user supplied action code.*/
-@SuppressWarnings({"rawtypes", "unchecked", "unused"})
+@SuppressWarnings({"unchecked", "unused"})
 class CUP$Parser$actions {
   private final Parser parser;
 
