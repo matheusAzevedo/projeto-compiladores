@@ -369,6 +369,7 @@ method_declaration ::=
 			SemanticsImpl.getInstance().exitCurrentScope((Expression) to);
 		} else {
 			SemanticsImpl.getInstance().exitCurrentScope();
+			SemanticImpl.getInstance().getCodeGenerator().addBRSP((String) id);
 		}
 	:}
 ;
@@ -393,9 +394,13 @@ variable_declarator_loop ::=
 		 SemanticsImpl.getInstance().addVariableToTempList((Variable) var);
 	:};
 
-variable_declarator ::= IDENTIFIER:id brack_loop attr_opt:exp {:
-	 Variable temp = new Variable((String) id, new Type("null"), (Expression) exp);
-	 RESULT = temp;
+variable_declarator ::= IDENTIFIER:id brack_loop attr_opt:exp 
+{:
+	Variable temp = new Variable((String) id, new Type("null"), (Expression) exp);
+	if(!SemanticImpl.getInstance().isForExp) {
+		SemanticImpl.getInstance().getCodeGenerator().assignmentDeclaration((Variable) temp, (Expression) exp);
+	}
+	RESULT = temp;
 :};
 
 attr_opt ::= 
@@ -436,9 +441,11 @@ call_method ::=
 		if (args != null) {
 			SemanticsImpl.getInstance().verifyCallMethod((String) id, (ArrayList<Expression>) args);
 			RESULT = id;
+			SemanticImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id, (ArrayList<Expression>) args);
 		} else {
 		    SemanticsImpl.getInstance().verifyCallMethod((String) id, new ArrayList<Expression>());
 			RESULT = id;
+			SemanticImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id);
 		}
 	:}
 ;
