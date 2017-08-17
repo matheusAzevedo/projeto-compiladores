@@ -8,6 +8,7 @@ import main.Main;
 import compiler.core.*;
 import compiler.analysis.*;
 import java.util.ArrayList;
+import util.Node;
 
 parser code {:
 	public static int errors = 0;
@@ -369,7 +370,7 @@ method_declaration ::=
 			SemanticsImpl.getInstance().exitCurrentScope((Expression) to);
 		} else {
 			SemanticsImpl.getInstance().exitCurrentScope();
-			SemanticImpl.getInstance().getCodeGenerator().addBRSP((String) id);
+			SemanticsImpl.getInstance().getCodeGenerator().addBRSP((String) id);
 		}
 	:}
 ;
@@ -397,8 +398,8 @@ variable_declarator_loop ::=
 variable_declarator ::= IDENTIFIER:id brack_loop attr_opt:exp 
 {:
 	Variable temp = new Variable((String) id, new Type("null"), (Expression) exp);
-	if(!SemanticImpl.getInstance().isForExp) {
-		SemanticImpl.getInstance().getCodeGenerator().assignmentDeclaration((Variable) temp, (Expression) exp);
+	if(!SemanticsImpl.getInstance().isForExp) {
+		SemanticsImpl.getInstance().getCodeGenerator().assignmentDeclaration((Variable) temp, (Expression) exp);
 	}
 	RESULT = temp;
 :};
@@ -420,11 +421,15 @@ variable_initializer_loop ::=
 variable_initializer ::= 
 	expression:e {: RESULT = e; :}
 	| LBRACE variable_initializer_opt RBRACE
-	| IDENTIFIER:id {:
+	| IDENTIFIER:id 
+	{:
 		SemanticsImpl.getInstance().validateVariableName(id); 
-		Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id); 
+		Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id);
+		if(!SemanticsImpl.getInstance().isForExp) {
+			SemanticsImpl.getCodeGenerator().generateLDCode((Variable) var);
+		}
 		RESULT = var.getValue();
-:}
+	:}
 ;
 
 expression_exp ::=
@@ -441,11 +446,11 @@ call_method ::=
 		if (args != null) {
 			SemanticsImpl.getInstance().verifyCallMethod((String) id, (ArrayList<Expression>) args);
 			RESULT = id;
-			SemanticImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id, (ArrayList<Expression>) args);
+			SemanticsImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id, (ArrayList<Expression>) args);
 		} else {
 		    SemanticsImpl.getInstance().verifyCallMethod((String) id, new ArrayList<Expression>());
 			RESULT = id;
-			SemanticImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id);
+			SemanticsImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id);
 		}
 	:}
 ;
@@ -461,15 +466,16 @@ numeric_expression ::=
 		SemanticsImpl.getInstance().isNumericExpression((Expression) e);
  		RESULT = e; 
 	:}
-	| expression:e pre_pos_op 					
+	| expression:e pre_pos_op:po 					
 	{: 
 		SemanticsImpl.getInstance().isNumericExpression((Expression) e);
- 		RESULT = e; 
+ 		RESULT = SemanticsImpl.getInstance().getExpression((Expression) e, Operation.valueOf(((Node) po).getIdentifier()), null);; 
 	:}
-	| expression:e1 between_op expression:e2 					
+	| expression:e1 between_op:bo expression:e2 					
 	{: 
 		SemanticsImpl.getInstance().isNumericExpression((Expression) e1, (Expression) e2);
- 		RESULT = e1; 
+		Log.log(((Node) bo).getIdentifier());
+ 		RESULT = SemanticsImpl.getInstance().getExpression((Expression) e1, Operation.valueOf(((Node) bo).getIdentifier()),	(Expression) e2); 
 	:}
 ;
 
@@ -478,19 +484,28 @@ bit_expression ::=
 	| expression bit_op expression;
 
 testing_expression ::=
-	expression test_op expression
+	expression:e1 test_op:to expression:e2 
+	{:
+		SemanticsImpl.getInstance().isRelationalExpression((Expression) e1, (Expression) e2);
+	    RESULT = SemanticsImpl.getInstance().getExpression((Expression) e1,
+	                                                       Operation.valueOf(((Node) to).getIdentifier()), 
+															(Expression) e2);
+	:}
 ;
 
 logical_expression ::= 
 	NOT:op expression:e 
 	{: 
 		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e).getType());
-		RESULT = e; 
+		RESULT = e;
 	:}
 	| expression:e1 logical_op:lo expression:e2
 	{:
 		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e1).getType());
 		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e2).getType());
+		RESULT = SemanticsImpl.getInstance().getExpression((Expression) e1,
+                                                          Operation.valueOf(((Node) lo).getIdentifier()), 
+														  (Expression) e2); 
 	:}
 	| expression:e1 QUESTION expression:e2 COLON expression:e3 
 	{: 
@@ -530,12 +545,17 @@ bit_op ::=
 ;
 
 string_op ::= 
-	PLUS
-	| PLUSEQ
+	PLUS {: RESULT = new Node("+","primary", "PLUS"); :}
+	| PLUSEQ {: RESULT = new Node("+=","primary", "PLUSEQ"); :}
 ;
 
 string_expression ::= 
-	expression string_op expression
+	expression:e1 string_op:so expression:e2 
+	{:
+		SemanticsImpl.getInstance().isStringExpression((Expression) e1, (Expression) e2);
+		RESULT = SemanticsImpl.getInstance().getExpression((Expression) e1, Operation.valueOf(((Node) so).getIdentifier()),	(Expression) e2);
+		
+	:}
 ;
 
 literal_expression ::= 
@@ -552,30 +572,31 @@ literal_expression ::=
 ;
 
 test_op ::= 
-	LT			{: RESULT = "<"; :}
-	| GT		{: RESULT = ">"; :}
-	| LTEQ		{: RESULT = "<="; :}
-	| GTEQ		{: RESULT = ">="; :}
-	| EQEQ		{: RESULT = "=="; :}
-	| NOTEQ		{: RESULT = "!="; :}
+    GT       {: RESULT = new Node(">","primary", "GT"); :}
+    | LT     {: RESULT = new Node("<","primary", "LT"); :}
+    | GTEQ   {: RESULT = new Node(">=","primary", "GTEQ"); :}
+    | LTEQ   {: RESULT = new Node("<=","primary", "LTEQ"); :}
+    | EQEQ   {: RESULT = new Node("==","primary", "EQEQ"); :}
+    | NOTEQ  {: RESULT = new Node("!=","primary", "NOTEQ"); :}
+    | NOT    {: RESULT = new Node("!","primary", "NOT"); :}
 ;
 
 between_op ::= 
-	PLUS		{: RESULT = "+"; :}
-	| PLUSEQ	{: RESULT = "+="; :}
-	| MINUS		{: RESULT = "-"; :}
-	| MINUSEQ	{: RESULT = "-="; :}
-	| MULT		{: RESULT = "*"; :}
-	| MULTEQ	{: RESULT = "*="; :}
-	| DIV		{: RESULT = "/"; :}
-	| DIVEQ		{: RESULT = "/="; :}
-	| MOD		{: RESULT = "%"; :}
-	| MODEQ		{: RESULT = "%="; :}
+	PLUS       {: RESULT = new Node("+","primary", "PLUS"); System.out.println("Esse daqui1"); :}
+	| PLUSEQ   {: RESULT = new Node("+=","primary", "PLUSEQ"); :}
+	| MINUS    {: RESULT = new Node("-","primary", "MINUS"); :}
+	| MINUSEQ  {: RESULT = new Node("-=","primary", "MINUSEQ"); :}
+	| MULT     {: RESULT = new Node("*","primary", "MULT"); :}
+	| MULTEQ   {: RESULT = new Node("*=","primary", "MULTEQ"); :}
+	| DIV      {: RESULT = new Node("/","primary", "DIV"); :}
+	| DIVEQ    {: RESULT = new Node("/=","primary", "DIVEQ"); :}
+	| MOD      {: RESULT = new Node("%","primary", "MOD"); :}
+	| MODEQ    {: RESULT = new Node("%=","primary", "MODEQ"); :}
 ;	
 
 pre_pos_op ::= 
-	PLUSPLUS:pp {: RESULT = pp; :}
-	| MINUSMINUS:mm {: RESULT = mm; :};
+	PLUSPLUS:pp {: RESULT = new Node("++","primary", "PLUSPLUS"); :}
+	| MINUSMINUS:mm {: RESULT = new Node("--","primary", "MINUSMINUS"); :};
 
 type_specifier ::= BOOLEAN {:RESULT = new Type("boolean");:}
 	| BYTE {:RESULT = new Type("byte");:}		                                                            
@@ -593,17 +614,17 @@ type_specifier ::= BOOLEAN {:RESULT = new Type("boolean");:}
 ;
 
 logical_op ::=
-	AND			{: RESULT = "&"; :}
-	| ANDEQ		{: RESULT = "&="; :}
-	| OR		{: RESULT = "|"; :}
-	| OROR		{: RESULT = "||"; :}
-	| OREQ		{: RESULT = "|="; :}
-	| XOR		{: RESULT = "^"; :}
-	| XOREQ		{: RESULT = "^="; :}
-	| ANDAND	{: RESULT = "&&"; :}
-	| OROREQ	{: RESULT = "||="; :}
-	| MOD		{: RESULT = "%"; :}
-	| MODEQ		{: RESULT = "%="; :}
+	AND			{: RESULT = new Node("&","primary", "AND"); :}
+   	| ANDEQ     {: RESULT = new Node("&=","primary", "ANDEQ"); :}
+    | OR        {: RESULT = new Node("|","primary", "OR"); :}
+    | OROR      {: RESULT = new Node("||","primary", "OROR"); :}
+    | OREQ      {: RESULT = new Node("|=","primary", "OREQ"); :}
+    | XOR       {: RESULT = new Node("^","primary", "XOR"); :}
+    | XOREQ     {: RESULT = new Node("^=","primary", "XOREQ"); :}
+    | ANDAND    {: RESULT = new Node("&&","primary", "ANDAND"); :}
+    | OROREQ    {: RESULT = new Node("||=","primary", "OROREQ"); :}
+    | MOD       {: RESULT = new Node("%","primary", "MOD"); :}
+    | MODEQ     {: RESULT = new Node("%=","primary", "MODEQ"); :}
 ;
 
 entity_name ::=
@@ -618,17 +639,23 @@ attribution ::= IDENTIFIER:id eq_op:eo expression:e
 		if(e instanceof String) { 
 			SemanticsImpl.getInstance().checkVariableAttribution(id, (String) e);
 			Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id);
+			if(!SemanticsImpl.getInstance().isForExp) {
+				SemanticsImpl.getInstance().getCodeGenerator().assignmentDeclaration((Variable)var,(String)e);
+			}
 		} else {
 			SemanticsImpl.getInstance().checkVariableAttribution(id, (Expression) e); 
 			Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id);
 			var.setValue((Expression) e);
+			if(!SemanticsImpl.getInstance().isForExp) {
+				SemanticsImpl.getInstance().getCodeGenerator().assignmentDeclaration((Variable)var,(Expression)e);
+			}
 			RESULT = e;
 		}
 	:}
 ;
 
 eq_op ::= 
-	PLUSEQ:op {: RESULT = "+="; :}
+	PLUSEQ:op {: RESULT = "+=";  System.out.println("Esse daqui2");:}
 	| MINUSEQ:op {: RESULT = "-="; :}
 	| MULTEQ:op {: RESULT = "*="; :}
 	| DIVEQ:op {: RESULT = "/="; :}
@@ -663,6 +690,11 @@ statement ::=
 	| THROW expression SEMICOLON
 	| IDENTIFIER COLON statement
 	| BREAK identifier_opt SEMICOLON
+	{:
+		if(SemanticsImpl.getInstance().nfor > 0) {
+			SemanticsImpl.getInstance().getCodeGenerator().generateBREAKcode();
+		}
+	:}
 	| CONTINUE identifier_opt SEMICOLON 
 	| SEMICOLON
 ;
@@ -811,6 +843,9 @@ expression ::=
 	| creating_expression:cte		{: RESULT = cte; :}
 	| literal_expression:le			
 	{: 
+		if(!SemanticsImpl.getInstance().isForExp) {
+			SemanticsImpl.getInstance().getCodeGenerator().generateLDCode((Expression) le);
+		} 
 		RESULT = le; 
 	:}
 	| NULL_LITERAL:nl				{: RESULT = nl; :}
@@ -820,6 +855,10 @@ expression ::=
 	{: 
 		SemanticsImpl.getInstance().validateVariableName(id);
 		Variable var = SemanticsImpl.getInstance().findVariableByIdentifier((String) id);
+
+ 		if(!SemanticsImpl.getInstance().isForExp) {
+			SemanticsImpl.getInstance().getCodeGenerator().generateLDCode((Variable) var);
+		}
 
 		if(var.getValue()!=null) {
             RESULT = new Expression(var.getType(), var.getIdentifier());

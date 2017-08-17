@@ -9,7 +9,9 @@ import java.util.Stack;
 import compiler.core.Expression;
 import compiler.core.For;
 import compiler.core.Function;
+import compiler.core.Operation;
 import compiler.core.Parameter;
+import compiler.core.Register;
 import compiler.core.ScopedEntity;
 import compiler.core.Type;
 import compiler.core.Variable;
@@ -28,11 +30,12 @@ public class SemanticsImpl implements Semantics {
 	private List<Variable> tempVariables;
 	private static Map<String, List<String>> compatibleTypes;
 	private Stack<ScopedEntity> scopedEntities;
+    private Stack<Integer> condLabel;
 	private ArrayList<Function> functions;
 	private HashMap<String, Variable> vars;
 	private static String currentOperator;
 	private static Calculator calculator;
-	private static boolean isForExp;
+	public static boolean isForExp;
 	public int nfor = 0;
 	public static CodeGenerator codeGenerator;
 
@@ -51,6 +54,7 @@ public class SemanticsImpl implements Semantics {
 		this.compatibleTypes = new HashMap<>();
 		this.functions = new ArrayList<Function>();
 		this.scopedEntities = new Stack<ScopedEntity>();
+		this.condLabel = new Stack<Integer>();
 		this.vars = new HashMap<String, Variable>();
 		this.tempVariables = new ArrayList<Variable>();
 		initBasicTypes();
@@ -106,6 +110,7 @@ public class SemanticsImpl implements Semantics {
 					keyFunc += p.getType().getTypeName();
 				}
 			}
+            codeGenerator.addFunctionAddress(keyFunc);
 			addFunctionAndNewScope(temp);
 		}
 	}
@@ -113,7 +118,7 @@ public class SemanticsImpl implements Semantics {
 	@Override
 	public void validateVariableName(String variableName) throws InvalidVariableException {
 		if (!checkVariableExistence(variableName)) {
-			throw new InvalidVariableException(" A variavel chamada " + variableName + " nÃ£o existe!");
+			throw new InvalidVariableException(" A variavel chamada " + variableName + " não existe!");
 		}
 	}
 
@@ -137,13 +142,11 @@ public class SemanticsImpl implements Semantics {
 		ScopedEntity scoped = scopedEntities.pop();
 		if (scoped instanceof Function) {
 			if (exp != null) {
-				checkDeclaredAndReturnedType(scoped.getName(),
-						((Function) scoped).getDeclaredReturnType(), exp);
+				checkDeclaredAndReturnedType(scoped.getName(), ((Function) scoped).getDeclaredReturnType(), exp);
 			} else {
-				if (!((Function) scoped).getDeclaredReturnType().equals(
-						new Type("void"))) {
-					throw new InvalidFunctionException("ERROR: A função " + scoped.getName()
-							+ " precisa retornar o tipo da variável.");
+				if (!((Function) scoped).getDeclaredReturnType().equals(new Type("void"))) {
+					throw new InvalidFunctionException(
+							"ERROR: A função " + scoped.getName() + " precisa retornar o tipo da variável.");
 				}
 			}
 		}
@@ -204,21 +207,19 @@ public class SemanticsImpl implements Semantics {
 		};
 	}
 
-	
-	
 	public ScopedEntity getCurrentScope() {
 		return scopedEntities.peek();
 	}
 
 	public String getFunctionType(String variableName) {
-        for(Function f : functions){
-            if (f.getName().equals(variableName)){
-                return f.getDeclaredReturnType().getTypeName();
-            }
-        }
-        return null;
-    }
-	
+		for (Function f : functions) {
+			if (f.getName().equals(variableName)) {
+				return f.getDeclaredReturnType().getTypeName();
+			}
+		}
+		return null;
+	}
+
 	private void createScope(ScopedEntity scope) {
 		scopedEntities.push(scope);
 	}
@@ -236,36 +237,38 @@ public class SemanticsImpl implements Semantics {
 	private void createNewScope(ScopedEntity scope) {
 		scopedEntities.push(scope);
 	}
-	
-	private void checkDeclaredAndReturnedType(String functionName, Type declaredType, Expression exp) throws InvalidFunctionException {
-        if(exp == null && declaredType.equals(new Type("void"))) {
-        	return;
-        }
-        
-        if(exp == null && !declaredType.equals(new Type("void"))) {
-        	throw new InvalidFunctionException("A função '" + functionName + "' não tem retorno.");
-        }
+
+	private void checkDeclaredAndReturnedType(String functionName, Type declaredType, Expression exp)
+			throws InvalidFunctionException {
+		if (exp == null && declaredType.equals(new Type("void"))) {
+			return;
+		}
+
+		if (exp == null && !declaredType.equals(new Type("void"))) {
+			throw new InvalidFunctionException("A função '" + functionName + "' não tem retorno.");
+		}
 
 		boolean isReturn = exp.getContext().equalsIgnoreCase("return");
-        
-        if(!declaredType.equals(new Type("void"))) {
-            if(!isReturn) {
-            	throw new InvalidFunctionException("A função '" + functionName + "' não tem retorno.");
-            }
-            
-            if (!declaredType.equals(exp.getType()) && !checkTypeCompatibility(declaredType,exp.getType())) {
-                throw new InvalidFunctionException("A função " + functionName
-                        + " não retornou o tipo esperado: " + declaredType);
-            }
-            
-        } else {
-            if(isReturn) {
-                if(exp.getType() != null) {
-                    throw new InvalidFunctionException("A função '" + functionName + "' é 'void' e não deve ter retorno.");
-                }
-            }
-        }
-    }
+
+		if (!declaredType.equals(new Type("void"))) {
+			if (!isReturn) {
+				throw new InvalidFunctionException("A função '" + functionName + "' não tem retorno.");
+			}
+
+			if (!declaredType.equals(exp.getType()) && !checkTypeCompatibility(declaredType, exp.getType())) {
+				throw new InvalidFunctionException(
+						"A função " + functionName + " não retornou o tipo esperado: " + declaredType);
+			}
+
+		} else {
+			if (isReturn) {
+				if (exp.getType() != null) {
+					throw new InvalidFunctionException(
+							"A função '" + functionName + "' é 'void' e não deve ter retorno.");
+				}
+			}
+		}
+	}
 
 	public void checkIsBoolean(Type type) throws InvalidTypeException {
 		if (!checkTypeCompatibility(new Type("boolean"), type)) {
@@ -384,12 +387,52 @@ public class SemanticsImpl implements Semantics {
 		if (var != null) {
 			f.addVariable(var);
 		}
-
+		
 		if (e1 != null) {
 			if (!e1.getType().getTypeName().equals("boolean")) {
 				throw new InvalidTypeException("ERROR: O valor para a expressão deveria ser boolean, porém é do tipo "
 						+ e1.getType().getTypeName());
 			}
+			
+			String[] e1_parts = e1.getValue().split(" ");
+            if(e1_parts.length > 1) {
+                codeGenerator.generateLDCode(findVariableByIdentifier(e1_parts[0]));
+                condLabel.push(codeGenerator.getLabels());
+                codeGenerator.generateLDCode(new Expression(new Type("int") ,e1_parts[2]));
+                switch (Operation.valueOf(e1_parts[1])) {
+                    case GT:
+                        codeGenerator.generateSUBCode();
+                        codeGenerator.generateForCondition("BLEQZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        break;
+                    case LTEQ:
+                        codeGenerator.generateSUBCode();
+                        codeGenerator.generateForCondition("BGTZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        break;
+                    case LT:
+                        codeGenerator.generateSUBCode();
+                        codeGenerator.generateForCondition("BGEQZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        break;
+                    case GTEQ:
+                        codeGenerator.generateSUBCode();
+                        codeGenerator.generateForCondition("BLTZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        break;
+                    case EQEQ:
+                        codeGenerator.generateForCondition("BNEQ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        break;
+                    case NOTEQ:
+                        codeGenerator.generateSUBCode();
+                        codeGenerator.generateForCondition("BEQ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        break;
+                }
+            } else {
+                if (e1_parts[0].equals("false")) {
+                    codeGenerator.generateBRCode("forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                    condLabel.push(codeGenerator.getLabels());
+                } else if (e1_parts[0].equals("true")) {
+                    condLabel.push(codeGenerator.getLabels() + 8);
+                }
+            }
+			
 			setForExp(false);
 		}
 
@@ -407,8 +450,33 @@ public class SemanticsImpl implements Semantics {
 		scopedEntities.push(f);
 	}
 
-	public void dismissCurrentFor(Expression aexp)
+	public void dismissCurrentFor(Expression eo)
 			throws InvalidFunctionException, InvalidOperationException, InvalidTypeException {
+		if (eo != null) {
+			String[] eo_parts = eo.getValue().split(" ");
+			switch (Operation.valueOf(eo_parts[1])) {
+			case PLUSPLUS:
+				codeGenerator.generateLDCode(findVariableByIdentifier(eo_parts[0]));
+				codeGenerator.generateSUBCode("1");
+				codeGenerator.generateSTCode(findVariableByIdentifier(eo_parts[0]));
+				break;
+
+			case MINUSMINUS:
+				codeGenerator.generateLDCode(findVariableByIdentifier(eo_parts[0]));
+				codeGenerator.generateADDCode("1");
+				codeGenerator.generateSTCode(findVariableByIdentifier(eo_parts[0]));
+				break;
+
+			default:
+				Expression le = new Expression(new Type("int"), eo_parts[0]);
+				Expression re = new Expression(new Type("int"), eo_parts[2]);
+				codeGenerator.generateLDCode(le);
+				codeGenerator.generateLDCode(re);
+				getExpression(le, Operation.valueOf(eo_parts[1]), re);
+				break;
+			}
+
+		}
 		nfor--;
 		ScopedEntity scoped = scopedEntities.pop();
 	}
@@ -483,30 +551,150 @@ public class SemanticsImpl implements Semantics {
 		}
 	}
 
-	public Expression getExpression(Expression le, String md, Expression re)
+	public Expression getExpression(Expression le, Operation md, Expression re)
 			throws InvalidTypeException, InvalidOperationException {
-		if (checkTypeCompatibility(le.getType(), re.getType()) || checkTypeCompatibility(re.getType(), le.getType())) {
-			Type newType = getMaxType(le.getType(), re.getType());
-			String result;
+		Register register;
+		System.out.println("Esse daqui " + md);
+		
+		if (re == null || checkTypeCompatibility(le.getType(), re.getType())
+				|| checkTypeCompatibility(re.getType(), le.getType())) {
 			switch (md) {
-			case "+":
-				result = calculator.getSumNumericValue(le, re, md);
-				return new Expression(newType, result);
-			case "-":
-				result = calculator.getSubNumericValue(le, re, md);
-				return new Expression(newType, result);
-			case "*":
-				result = calculator.getMultNumericValue(le, re, md);
-				return new Expression(newType, result);
-			case "/":
-				result = calculator.getDivNumericValue(le, re, md);
-				return new Expression(newType, result);
+			case AND:
+				return new Expression(new Type("boolean"));
+			case OR:
+				return new Expression(new Type("boolean"));
+			case GTEQ:
+				if (!isForExp) {
+					codeGenerator.generateSUBCode();
+					codeGenerator.generateBLTZCode(3);
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					codeGenerator.generateBRCode(2);
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+				}
+
+				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
+			case EQEQ:
+				if (!isForExp) {
+					codeGenerator.generateBEQCode(3);
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "0"));
+					codeGenerator.generateBRCode(2);
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "1"));
+				}
+				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
+
+			case LTEQ:
+				if (!isForExp) {
+					codeGenerator.generateSUBCode();
+					codeGenerator.generateBGTZCode(3);
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					codeGenerator.generateBRCode(2);
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+				}
+				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
+			case LT:
+				if (!isForExp) {
+					codeGenerator.generateSUBCode();
+					if (le.getContext() == "for") {
+						codeGenerator.generateForCondition("BGEQZ",
+								"forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+					}
+					codeGenerator.generateBGEQZCode(3);
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					codeGenerator.generateBRCode(2);
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+				}
+				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
+			case GT:
+				if (!isForExp) {
+					codeGenerator.generateSUBCode();
+					codeGenerator.generateBLEQZCode(3);
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					codeGenerator.generateBRCode(2);
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+
+				}
+				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
+			case NOTEQ:
+				if (!isForExp) {
+					codeGenerator.generateBEQCode(3);
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					codeGenerator.generateBRCode(2);
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+				}
+				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
+			case NOT:
+				return new Expression(new Type("boolean"));
+			case XOREQ:
+				return new Expression(new Type("boolean"));
+			case XOR:
+				return new Expression(new Type("boolean"));
+			case OROR:
+				return new Expression(new Type("boolean"));
+			case ANDAND:
+				return new Expression(new Type("boolean"));
+			case ANDEQ:
+				return new Expression(new Type("boolean"));
+			case OREQ:
+				return new Expression(new Type("boolean"));
+			case OROREQ:
+				return new Expression(new Type("boolean"));
+			case MINUS:
+				if (!isForExp) {
+					codeGenerator.generateSUBCode();
+				}
+				return new Expression(getMaxType(le.getType(), re.getType()),
+						le.getValue() + " " + md + " " + re.getValue());
+			case MULT:
+				if (!isForExp) {
+					codeGenerator.generateMULCode();
+				}
+				return new Expression(getMaxType(le.getType(), re.getType()),
+						le.getValue() + " " + md + " " + re.getValue());
+			case MOD:
+				if (!isForExp)
+					codeGenerator.generateMODCode();
+				return new Expression(getMaxType(le.getType(), re.getType()),
+						le.getValue() + " " + md + " " + re.getValue());
+			case PLUS:
+				if (!isForExp) {
+					codeGenerator.generateADDCode();
+				}
+				return new Expression(getMaxType(le.getType(), re.getType()),
+						le.getValue() + " " + md + " " + re.getValue());
+			case DIV:
+				if (!isForExp)
+					codeGenerator.generateDIVCode();
+				return new Expression(getMaxType(le.getType(), re.getType()),
+						le.getValue() + " " + md + " " + re.getValue());
+			case DIVEQ:
+				return new Expression(getMaxType(le.getType(), re.getType()));
+			case PLUSEQ:
+				return new Expression(getMaxType(le.getType(), re.getType()));
+			case MINUSEQ:
+				return new Expression(getMaxType(le.getType(), re.getType()));
+			case MULTEQ:
+				return new Expression(getMaxType(le.getType(), re.getType()));
+			case PLUSPLUS:
+				if (!isForExp) {
+					codeGenerator.generateADDCode("1");
+					codeGenerator.generateSTCode(le);
+				}
+				return new Expression(le.getType(), le.getValue() + " " + md);
+			case MINUSMINUS:
+				if (!isForExp) {
+					codeGenerator.generateSUBCode("1");
+					codeGenerator.generateSTCode(le);
+
+				}
+				return new Expression(le.getType(), le.getValue() + " " + md);
 			default:
-				break;
+				throw new InvalidOperationException("ERRO: A operação '" + md + "' não existe!");
+
 			}
-			return new Expression(newType);
 		}
-		throw new InvalidTypeException("Not allowed!");
+
+		throw new InvalidTypeException("ERROR: Operação formada pela expressão '" + le.getValue() + " " + md + " "
+				+ re.getValue() + "' não é permitida!");
 	}
 
 	private Type getMaxType(Type type1, Type type2) {
@@ -578,23 +766,23 @@ public class SemanticsImpl implements Semantics {
 
 		List<String> intCompTypes = new ArrayList<String>();
 		intCompTypes.add("int");
-        intCompTypes.add("Integer");
+		intCompTypes.add("Integer");
 
 		List<String> booleanCompTypes = new ArrayList<String>();
 		booleanCompTypes.add("boolean");
-		
+
 		List<String> stringCompTypes = new ArrayList<String>();
-        stringCompTypes.add("int");
-        stringCompTypes.add("double");
-        stringCompTypes.add("long");
-        stringCompTypes.add("float");
-        stringCompTypes.add("char");
-        stringCompTypes.add("null");
-        stringCompTypes.add("boolean");
+		stringCompTypes.add("int");
+		stringCompTypes.add("double");
+		stringCompTypes.add("long");
+		stringCompTypes.add("float");
+		stringCompTypes.add("char");
+		stringCompTypes.add("null");
+		stringCompTypes.add("boolean");
 
 		compatibleTypes.put("double", doubleCompTypes);
 		compatibleTypes.put("float", floatCompTypes);
-		compatibleTypes.put("long", longCompTypes)	;
+		compatibleTypes.put("long", longCompTypes);
 		compatibleTypes.put("int", intCompTypes);
 		compatibleTypes.put("boolean", booleanCompTypes);
 		compatibleTypes.put("Integer", intCompTypes);
@@ -608,8 +796,8 @@ public class SemanticsImpl implements Semantics {
 	public void setForExp(boolean isForExp) {
 		SemanticsImpl.isForExp = isForExp;
 	}
-	
-	public CodeGenerator getCodeGenerator() {
-        return codeGenerator;
-    }
+
+	public static CodeGenerator getCodeGenerator() {
+		return codeGenerator;
+	}
 }

@@ -152,7 +152,7 @@ public class CodeGenerator {
 
 	public void generateBREAKcode() {
 		labels += 8;
-		addCode(labels + ": BR " +"forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP"+ SemanticsImpl.getInstance().nfor);
+		addCode(labels + ": BR " +"forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + SemanticsImpl.getInstance().nfor);
 	}
 
 	public void generateBEQCode(int br) {
@@ -388,6 +388,10 @@ public class CodeGenerator {
 		return labels;
 	}
 
+	public int getLabels() {
+        return labels;
+    }
+	
 	public void generateFinalAssemblyCode() throws IOException {
 		String rootPath = Paths.get("").toAbsolutePath().toString();
 		String filePath = "/code/";
