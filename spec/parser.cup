@@ -395,6 +395,8 @@ constructor_declaration ::= modifier_loop IDENTIFIER LPAREN parameter_list_opt R
 variable_declaration ::=
 	type:t variable_declarator_loop:v SEMICOLON
 	 {:
+		SemanticsImpl.getInstance().checkTypeVariablesCompatibility(((Variable) v).getType(), (Type) t);
+
 		SemanticsImpl.getInstance().addVariablesFromTempList((Type) t);
 		RESULT = v;
 	:}
@@ -412,7 +414,7 @@ variable_declarator_loop ::=
 
 variable_declarator ::= IDENTIFIER:id brack_loop attr_opt:exp 
 {:
-	Variable temp = new Variable((String) id, new Type("null"), (Expression) exp);
+	Variable temp = new Variable((String) id, new Type(((Expression) exp).getType().getTypeName()), (Expression) exp);
 	if(!SemanticsImpl.getInstance().isForExp) {
 		SemanticsImpl.getInstance().getCodeGenerator().assignmentDeclaration((Variable) temp, (Expression) exp);
 	}
@@ -496,7 +498,6 @@ testing_expression ::=
 literal_expression ::= 
 	BOOLEAN_LITERAL:bl 
 	{: 
-		System.out.print("Literal");
 		RESULT = new Expression(new Type("boolean"), bl.toString()); 
 	:}
 ;

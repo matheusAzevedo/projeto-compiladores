@@ -83,11 +83,21 @@ public class SemanticsImpl implements Semantics {
 			return true;
 		} else {
 			List<String> tipos = compatibleTypes.get(leftType.getTypeName());
-
 			if (tipos == null) {
 				return false;
 			}
 			return tipos.contains(rightType.getTypeName());
+		}
+	}
+	
+	public void checkTypeVariablesCompatibility(Type leftType, Type rightType) throws InvalidFunctionException {
+		List<String> tipos = compatibleTypes.get(leftType.getTypeName());
+		if (leftType.equals(rightType)) {
+			return;
+		} else if (tipos == null || !tipos.contains(rightType.getTypeName())) {
+			String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s n�o � compativel com %s",
+					leftType.getTypeName(), rightType.getTypeName());
+			throw new InvalidFunctionException(exceptionMessage);
 		}
 	}
 
