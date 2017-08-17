@@ -56,8 +56,25 @@ public class CodeGenerator {
 		}
 	}
 
+	public void generateANDCode(Register r1, Register r2) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": AND " + result + ", " + r1 + ", " + r2);
+	}
+	
+	public void generateORCode(Register r1, Register r2) {
+		labels += 8;
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": OR " + result + ", " + r1 + ", " + r2);
+	}
+	
 	public void generateADDCode() {
 		incrementLabel();
+
 		Register one = registers[register - 1];
 		Register two = allocateRegister();
 
@@ -121,6 +138,16 @@ public class CodeGenerator {
 		register++;
 		Register result = allocateRegister();
 		addCode(labels + ": MUL " + result + ", " + one + ", " + two);
+	}
+	
+	public void generateMULNegativeCode() {
+		labels += 8;
+
+		Register one = allocateRegister();
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": MUL " + result + ", " + one + ", #-1");
 	}
 
 	public void generateDIVCode() {

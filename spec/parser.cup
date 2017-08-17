@@ -459,6 +459,7 @@ numeric_expression ::=
 	MINUS expression:e 					
 	{: 
 		SemanticsImpl.getInstance().isNumericExpression((Expression) e);
+		SemanticsImpl.getInstance().getCodeGenerator().generateMULNegativeCode();
  		RESULT = e; 
 	:}
 	| pre_pos_op expression:e 					
@@ -474,7 +475,6 @@ numeric_expression ::=
 	| expression:e1 between_op:bo expression:e2 					
 	{: 
 		SemanticsImpl.getInstance().isNumericExpression((Expression) e1, (Expression) e2);
-		Log.log(((Node) bo).getIdentifier());
  		RESULT = SemanticsImpl.getInstance().getExpression((Expression) e1, Operation.valueOf(((Node) bo).getIdentifier()),	(Expression) e2); 
 	:}
 ;
@@ -513,7 +513,6 @@ logical_expression ::=
 		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e2).getType());
 		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e3).getType());
 	:}
-	| BOOLEAN_LITERAL:bl {: RESULT = new Expression(new Type("boolean"), bl.toString()); :}
 ;
 
 casting_expression ::= 
@@ -552,21 +551,16 @@ string_op ::=
 string_expression ::= 
 	expression:e1 string_op:so expression:e2 
 	{:
-		SemanticsImpl.getInstance().isStringExpression((Expression) e1, (Expression) e2);
-		RESULT = SemanticsImpl.getInstance().getExpression((Expression) e1, Operation.valueOf(((Node) so).getIdentifier()),	(Expression) e2);
-		
+		SemanticsImpl.getInstance().isNumericExpression((Expression) e1, (Expression) e2);
+ 		RESULT = SemanticsImpl.getInstance().getExpression((Expression) e1, Operation.valueOf(((Node) so).getIdentifier()),	(Expression) e2); 	
 	:}
 ;
 
 literal_expression ::= 
 	INTEGER_LITERAL:il {: RESULT = new Expression(new Type("int"), il.toString()); :}
 	| FLOATING_POINT_LITERAL:fl {: RESULT = new Expression(new Type("float"), fl.toString()); :}
-	| BOOLEAN_LITERAL:bl 
-	{: 
-		RESULT = new Expression(new Type("boolean"), bl.toString()); 
-		SemanticsImpl.getInstance().setCurrentOperator(bl);
-	:}
-	| STRING_LITERAL:sl {: RESULT = new Expression(new Type("String"), sl.toString()); :}
+	| BOOLEAN_LITERAL:bl {: RESULT = new Expression(new Type("boolean"), bl.toString());System.out.print("BOOLEAN");:}
+	| STRING_LITERAL:sl {: RESULT = new Expression(new Type("String"), sl.toString()); System.out.print("STRING"); :}
 	| CHARACTER_LITERAL:cl {: RESULT = new Expression(new Type("char"), cl.toString()); :}
 	| NULL_LITERAL:nl {: RESULT = new Expression(new Type("null"), "null"); :}
 ;
@@ -582,7 +576,7 @@ test_op ::=
 ;
 
 between_op ::= 
-	PLUS       {: RESULT = new Node("+","primary", "PLUS"); System.out.println("Esse daqui1"); :}
+	PLUS       {: RESULT = new Node("+","primary", "PLUS"); :}
 	| PLUSEQ   {: RESULT = new Node("+=","primary", "PLUSEQ"); :}
 	| MINUS    {: RESULT = new Node("-","primary", "MINUS"); :}
 	| MINUSEQ  {: RESULT = new Node("-=","primary", "MINUSEQ"); :}
@@ -655,7 +649,7 @@ attribution ::= IDENTIFIER:id eq_op:eo expression:e
 ;
 
 eq_op ::= 
-	PLUSEQ:op {: RESULT = "+=";  System.out.println("Esse daqui2");:}
+	PLUSEQ:op {: RESULT = "+="; :}
 	| MINUSEQ:op {: RESULT = "-="; :}
 	| MULTEQ:op {: RESULT = "*="; :}
 	| DIVEQ:op {: RESULT = "/="; :}

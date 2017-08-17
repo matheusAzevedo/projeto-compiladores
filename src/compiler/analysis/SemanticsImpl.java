@@ -42,14 +42,15 @@ public class SemanticsImpl implements Semantics {
 	public static SemanticsImpl getInstance() {
 		if (instance == null) {
 			instance = new SemanticsImpl();
-			calculator = new Calculator();
 			codeGenerator = new CodeGenerator();
 			instance.setForExp(false);
 		}
+		initCompatibleTypes();
 		return instance;
+		
 	}
 
-	public SemanticsImpl() {
+	protected SemanticsImpl() {
 		this.secondaryTypes = new ArrayList<>();
 		this.compatibleTypes = new HashMap<>();
 		this.functions = new ArrayList<Function>();
@@ -82,6 +83,7 @@ public class SemanticsImpl implements Semantics {
 			return true;
 		} else {
 			List<String> tipos = compatibleTypes.get(leftType.getTypeName());
+
 			if (tipos == null) {
 				return false;
 			}
@@ -477,7 +479,10 @@ public class SemanticsImpl implements Semantics {
 			}
 
 		}
+		
+		String x = codeGenerator.getAssemblyCode().replace("forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP"+nfor, ""+(codeGenerator.getLabels()+8));
 		nfor--;
+        codeGenerator.setAssemblyCode(x);
 		ScopedEntity scoped = scopedEntities.pop();
 	}
 
@@ -505,9 +510,9 @@ public class SemanticsImpl implements Semantics {
 
 		if (isCorrectParams) {
 			throw new InvalidFunctionException(
-					"ERROR: O m√©todo " + methodName + " possui uma quantidade inv√°lida de par√¢metros!");
+					"ERROR: O mÈtodo " + methodName + " possui uma quantidade inv·lida de par‚metros!");
 		} else {
-			throw new InvalidFunctionException("ERROR: O m√©todo " + methodName + " n√£o existe!");
+			throw new InvalidFunctionException("ERROR: O mÈtodo " + methodName + " n„oo existe!");
 		}
 	}
 
@@ -520,12 +525,12 @@ public class SemanticsImpl implements Semantics {
 		if (!checkValidExistingType(expression.getType())) {
 			if (!expression.getType().getTypeName().equals("null")) {
 				throw new InvalidTypeException("ERROR: O tipo " + expression.getType().getTypeName()
-						+ " atribuido a variavel " + id + " n√£o existe!");
+						+ " atribuido a variavel " + id + " n„o existe!");
 			}
 		}
 		Type identifierType = findVariableByIdentifier(id).getType();
 		if (!checkTypeCompatibility(identifierType, expression.getType())) {
-			String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s n„o e  compativel com %s",
+			String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s n„o È compativel com %s",
 					identifierType, expression.getType());
 			throw new InvalidFunctionException(exceptionMessage);
 		}
@@ -535,14 +540,14 @@ public class SemanticsImpl implements Semantics {
 			throws InvalidVariableException, InvalidTypeException, InvalidFunctionException {
 		if (!checkVariableExistence(id)) {
 			throw new InvalidVariableException(
-					"ERROR: A variavel chamada " + id + " atribuida a fun√ß√£o " + function + " n√£o existe!");
+					"ERROR: A variavel chamada " + id + " atribuida a funÁ„o " + function + " n„o existe!");
 		}
 		Type identifierType = findVariableByIdentifier(id).getType();
 
 		for (Function f : functions) {
 			if (f.getName().equals(function)) {
 				if (!checkTypeCompatibility(identifierType, f.getDeclaredReturnType())) {
-					String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s n√£o √© compativel com %s",
+					String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s n„o È compativel com %s",
 							identifierType, f.getDeclaredReturnType());
 					throw new InvalidFunctionException(exceptionMessage);
 				}
@@ -553,15 +558,30 @@ public class SemanticsImpl implements Semantics {
 
 	public Expression getExpression(Expression le, Operation md, Expression re)
 			throws InvalidTypeException, InvalidOperationException {
-		Register register;
-		System.out.println("Esse daqui " + md);
-		
+		Register register, r1, r2;
+
+		initCompatibleTypes();
+			
 		if (re == null || checkTypeCompatibility(le.getType(), re.getType())
 				|| checkTypeCompatibility(re.getType(), le.getType())) {
+
 			switch (md) {
 			case AND:
+				if (!isForExp) {
+					r1 = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
+					r2 = codeGenerator.generateLDCode(new Expression(new Type("boolean"), re.getValue()));
+
+					codeGenerator.generateANDCode(r1, r2);
+				}
 				return new Expression(new Type("boolean"));
 			case OR:
+				if (!isForExp) {
+					r1 = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
+					r2 = codeGenerator.generateLDCode(new Expression(new Type("boolean"), re.getValue()));
+					
+					codeGenerator.generateORCode(r1, r2);
+				}
+				
 				return new Expression(new Type("boolean"));
 			case GTEQ:
 				if (!isForExp) {
@@ -688,7 +708,7 @@ public class SemanticsImpl implements Semantics {
 				}
 				return new Expression(le.getType(), le.getValue() + " " + md);
 			default:
-				throw new InvalidOperationException("ERRO: A operaÁ„o '" + md + "' n„o existe!");
+				throw new InvalidOperationException("ERRO: A operaÁ„o '" + md.toString() + "' n„o existe!");
 
 			}
 		}
@@ -724,12 +744,12 @@ public class SemanticsImpl implements Semantics {
 	}
 
 	public boolean isNumericExpression(Expression e1, Expression e2) throws InvalidOperationException {
-		if (e1 != null && e1.isNumeric()) {
+		if (isStringExpression(e1, e2)) {
+			return true;
+		} else if (e1 != null && e1.isNumeric()) {
 			if (e2 != null && e2.isNumeric()) {
 				return true;
 			}
-		} else if (isStringExpression(e1, e2)) {
-			return true;
 		}
 		throw new InvalidOperationException("ERROR: A express„o n„o È numÈrica ou entre strings,'" + e1.getValue()
 				+ "' com tipo '" + e1.getType().getTypeName() + "' e/ou a express„o " + e2.getValue() + " com tipo '"
