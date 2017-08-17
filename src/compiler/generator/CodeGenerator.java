@@ -112,6 +112,62 @@ public class CodeGenerator {
 		addCode(labels + ": SUB " + result + ", " + one + ", " + cons);
 	}
 
+	public void generateANDCode() {
+		incrementLabel();
+		Register regOne = registers[register - 1];
+		Register regTwo = allocateRegister();
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": AND " + result + ", " + regOne + ", " + regTwo);
+	}
+
+	public void generateANDCode(Register result, Register regOne, Expression exp) {
+		incrementLabel();
+		addCode(labels + ": AND " + result + ", " + regOne + ", #" + exp.getAssemblyValue());
+	}
+
+	public void generateANDCode(String cons) {
+		incrementLabel();
+		Register regOne = registers[register];
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": AND " + result + ", " + regOne + ", #" + cons);
+	}
+
+	public void generateANDCode(Register result, Register regOne, String cons) {
+		incrementLabel();
+		addCode(labels + ": AND " + result + ", " + regOne + ", " + cons);
+	}
+	
+	public void generateORCode() {
+		incrementLabel();
+		Register regOne = registers[register - 1];
+		Register regTwo = allocateRegister();
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": OR " + result + ", " + regOne + ", " + regTwo);
+	}
+
+	public void generateORCode(Register result, Register regOne, Expression exp) {
+		incrementLabel();
+		addCode(labels + ": OR " + result + ", " + regOne + ", #" + exp.getAssemblyValue());
+	}
+
+	public void generateORCode(String cons) {
+		incrementLabel();
+		Register regOne = registers[register];
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": OR " + result + ", " + regOne + ", #" + cons);
+	}
+
+	public void generateORCode(Register result, Register regOne, String cons) {
+		incrementLabel();
+		addCode(labels + ": OR " + result + ", " + regOne + ", " + cons);
+	}
+	
 	public void generateMULCode() {
 		incrementLabel();
 
