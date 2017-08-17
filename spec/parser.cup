@@ -282,7 +282,6 @@ precedence left BOOLEAN_LITERAL;
 precedence left STRING_LITERAL;
 precedence left CHARACTER_LITERAL;
 precedence left NULL_LITERAL;
-precedence left IDENTIFIER;
 
 
 start with compilation_unit;
@@ -362,7 +361,8 @@ declarations ::=
 
 method_declaration ::= 
 	modifier_loop type:t IDENTIFIER:id 
-	LPAREN parameter_list_opt:p RPAREN {:
+	LPAREN parameter_list_opt:p RPAREN 
+	{:
 		SemanticsImpl.getInstance().validateFunction(id, (ArrayList<Parameter>) p, (Type) t); 
 	:} 
 	termination_opt:to {:
@@ -370,7 +370,22 @@ method_declaration ::=
 			SemanticsImpl.getInstance().exitCurrentScope((Expression) to);
 		} else {
 			SemanticsImpl.getInstance().exitCurrentScope();
-			SemanticsImpl.getInstance().getCodeGenerator().addBRSP((String) id);
+		}
+		SemanticsImpl.getInstance().getCodeGenerator().addFunctionAddress(id);
+	:}
+;
+
+call_method ::= 
+	IDENTIFIER:id LPAREN 
+	arglist:args RPAREN		{: 
+		if (args != null) {
+			SemanticsImpl.getInstance().verifyCallMethod((String) id, (ArrayList<Expression>) args);
+			RESULT = id;
+			SemanticsImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id, (ArrayList<Expression>) args);
+		} else {
+		    SemanticsImpl.getInstance().verifyCallMethod((String) id, new ArrayList<Expression>());
+			RESULT = id;
+			SemanticsImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id);
 		}
 	:}
 ;
@@ -438,21 +453,6 @@ expression_exp ::=
     | DOT expression:e				{: RESULT = e; :}
     | COMMA expression:e			{: RESULT = e; :}
     | INSTANCEOF entity_name:en		{: RESULT = en; :}
-;
-
-call_method ::= 
-	IDENTIFIER:id LPAREN 
-	arglist:args RPAREN		{: 
-		if (args != null) {
-			SemanticsImpl.getInstance().verifyCallMethod((String) id, (ArrayList<Expression>) args);
-			RESULT = id;
-			SemanticsImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id, (ArrayList<Expression>) args);
-		} else {
-		    SemanticsImpl.getInstance().verifyCallMethod((String) id, new ArrayList<Expression>());
-			RESULT = id;
-			SemanticsImpl.getInstance().getCodeGenerator().generateCodeFunctionCall((String) id);
-		}
-	:}
 ;
 
 numeric_expression ::= 
@@ -559,8 +559,8 @@ string_expression ::=
 literal_expression ::= 
 	INTEGER_LITERAL:il {: RESULT = new Expression(new Type("int"), il.toString()); :}
 	| FLOATING_POINT_LITERAL:fl {: RESULT = new Expression(new Type("float"), fl.toString()); :}
-	| BOOLEAN_LITERAL:bl {: RESULT = new Expression(new Type("boolean"), bl.toString());System.out.print("BOOLEAN");:}
-	| STRING_LITERAL:sl {: RESULT = new Expression(new Type("String"), sl.toString()); System.out.print("STRING"); :}
+	| BOOLEAN_LITERAL:bl {: RESULT = new Expression(new Type("boolean"), bl.toString()); :}
+	| STRING_LITERAL:sl {: RESULT = new Expression(new Type("String"), sl.toString()); :}
 	| CHARACTER_LITERAL:cl {: RESULT = new Expression(new Type("char"), cl.toString()); :}
 	| NULL_LITERAL:nl {: RESULT = new Expression(new Type("null"), "null"); :}
 ;
@@ -842,6 +842,10 @@ expression ::=
 		} 
 		RESULT = le; 
 	:}
+	| call_method:cm				
+	{: 
+    	RESULT = new Expression(new Type((String) SemanticsImpl.getInstance().getFunctionType((String) cm)), (String) cm);
+	:}
 	| NULL_LITERAL:nl				{: RESULT = nl; :}
 	| SUPER:su						{: RESULT = su; :}
 	| THIS:th						{: RESULT = th; :}
@@ -861,10 +865,6 @@ expression ::=
         }	
 	:}
 	| attribution:attr				{: RESULT = attr; :}
-	| call_method:cm				
-	{: 
-    	RESULT = new Expression(new Type((String) SemanticsImpl.getInstance().getFunctionType((String) cm)), (String) cm);
-	:}
 	| LPAREN expression:e1 RPAREN	{: RESULT = e1; :}
 	| expression:e2 expression_exp	{: RESULT = e2; :}
 ;

@@ -95,8 +95,8 @@ public class SemanticsImpl implements Semantics {
 	public void validateFunction(String functionName, ArrayList<Parameter> params, Type declaredType)
 			throws InvalidFunctionException, InvalidParameterException, Exception {
 		if (declaredType == null) {
-			throw new InvalidFunctionException("ERRO: O método " + functionName
-					+ " está sem declaração do tipo de retorno, ou se possui, não contem retorno no seu fim!");
+			throw new InvalidFunctionException("ERRO: O mï¿½todo " + functionName
+					+ " estï¿½ sem declaraï¿½ï¿½o do tipo de retorno, ou se possui, nï¿½o contem retorno no seu fim!");
 		}
 		Function temp = new Function(functionName, params);
 		temp.setDeclaredReturnType(declaredType);
@@ -120,7 +120,7 @@ public class SemanticsImpl implements Semantics {
 	@Override
 	public void validateVariableName(String variableName) throws InvalidVariableException {
 		if (!checkVariableExistence(variableName)) {
-			throw new InvalidVariableException(" A variavel chamada " + variableName + " não existe!");
+			throw new InvalidVariableException(" A variavel chamada " + variableName + " nï¿½o existe!");
 		}
 	}
 
@@ -148,7 +148,7 @@ public class SemanticsImpl implements Semantics {
 			} else {
 				if (!((Function) scoped).getDeclaredReturnType().equals(new Type("void"))) {
 					throw new InvalidFunctionException(
-							"ERROR: A função " + scoped.getName() + " precisa retornar o tipo da variável.");
+							"ERROR: A funï¿½ï¿½o " + scoped.getName() + " precisa retornar o tipo da variï¿½vel.");
 				}
 			}
 		}
@@ -172,7 +172,7 @@ public class SemanticsImpl implements Semantics {
 				compatibleTypes.get(superClassName).add(className);
 				return;
 			}
-			throw new InvalidTypeException("A Superclasse não existe.");
+			throw new InvalidTypeException("A Superclasse nï¿½o existe.");
 		}
 	}
 
@@ -247,26 +247,26 @@ public class SemanticsImpl implements Semantics {
 		}
 
 		if (exp == null && !declaredType.equals(new Type("void"))) {
-			throw new InvalidFunctionException("A função '" + functionName + "' não tem retorno.");
+			throw new InvalidFunctionException("A funï¿½ï¿½o '" + functionName + "' nï¿½o tem retorno.");
 		}
 
 		boolean isReturn = exp.getContext().equalsIgnoreCase("return");
 
 		if (!declaredType.equals(new Type("void"))) {
 			if (!isReturn) {
-				throw new InvalidFunctionException("A função '" + functionName + "' não tem retorno.");
+				throw new InvalidFunctionException("A funï¿½ï¿½o '" + functionName + "' nï¿½o tem retorno.");
 			}
 
 			if (!declaredType.equals(exp.getType()) && !checkTypeCompatibility(declaredType, exp.getType())) {
 				throw new InvalidFunctionException(
-						"A função " + functionName + " não retornou o tipo esperado: " + declaredType);
+						"A funï¿½ï¿½o " + functionName + " nï¿½o retornou o tipo esperado: " + declaredType);
 			}
 
 		} else {
 			if (isReturn) {
 				if (exp.getType() != null) {
 					throw new InvalidFunctionException(
-							"A função '" + functionName + "' é 'void' e não deve ter retorno.");
+							"A funï¿½ï¿½o '" + functionName + "' ï¿½ 'void' e nï¿½o deve ter retorno.");
 				}
 			}
 		}
@@ -283,11 +283,11 @@ public class SemanticsImpl implements Semantics {
 			if (fun.getName().equals(temp.getName())) {
 				if (!fun.getDeclaredReturnType().getTypeName().equals(temp.getDeclaredReturnType().getTypeName())) {
 					throw new InvalidFunctionException(
-							"ERRO: O método " + temp.getName() + " ja foi declarado com um tipo de retorno diferente!");
+							"ERRO: O mï¿½todo " + temp.getName() + " ja foi declarado com um tipo de retorno diferente!");
 				}
 				if (temp.equals(fun)) {
 					throw new InvalidFunctionException(
-							"ERRO: O método " + temp.getName() + " ja foi declarado com esses mesmos parâmetros!");
+							"ERRO: O mï¿½todo " + temp.getName() + " ja foi declarado com esses mesmos parï¿½metros!");
 				}
 
 			}
@@ -300,7 +300,7 @@ public class SemanticsImpl implements Semantics {
 			for (int k = i + 1; k < params.size(); k++) {
 				if (params.get(i).getIdentifier().equals(params.get(k).getIdentifier())) {
 					throw new InvalidParameterException(
-							"ERRO: O parâmetro: " + params.get(k).getIdentifier() + " ja foi definido.");
+							"ERRO: O parï¿½metro: " + params.get(k).getIdentifier() + " ja foi definido.");
 				}
 			}
 		}
@@ -344,12 +344,12 @@ public class SemanticsImpl implements Semantics {
 	private void validateVariable(Variable variable) throws Exception {
 		if (checkVariableExistenceLocal(variable.getIdentifier())) {
 			throw new InvalidVariableException("ERROR: A variavel de nome " + variable.getIdentifier() + " e tipo "
-					+ variable.getType().getTypeName() + " já existem!");
+					+ variable.getType().getTypeName() + " jï¿½ existem!");
 		}
 		if (!checkValidExistingType(variable.getType())) {
 			if (!variable.getValue().getType().getTypeName().equals("null")) {
 				throw new InvalidTypeException("ERROR: O tipo " + variable.getType().getTypeName() + " da variavel "
-						+ variable.getIdentifier() + " não existem!");
+						+ variable.getIdentifier() + " nï¿½o existem!");
 			}
 		}
 	}
@@ -392,7 +392,7 @@ public class SemanticsImpl implements Semantics {
 		
 		if (e1 != null) {
 			if (!e1.getType().getTypeName().equals("boolean")) {
-				throw new InvalidTypeException("ERROR: O valor para a expressão deveria ser boolean, porém é do tipo "
+				throw new InvalidTypeException("ERROR: O valor para a expressï¿½o deveria ser boolean, porï¿½m ï¿½ do tipo "
 						+ e1.getType().getTypeName());
 			}
 			
@@ -441,7 +441,7 @@ public class SemanticsImpl implements Semantics {
 		if (e2 != null) {
 			if (e2.getType().getTypeName().equals("boolean")) {
 				throw new InvalidTypeException(
-						"ERROR: A expressão deveria ser aritimética, porém é uma expressão booleana");
+						"ERROR: A expressï¿½o deveria ser aritimï¿½tica, porï¿½m ï¿½ uma expressï¿½o booleana");
 			}
 		}
 
@@ -510,9 +510,9 @@ public class SemanticsImpl implements Semantics {
 
 		if (isCorrectParams) {
 			throw new InvalidFunctionException(
-					"ERROR: O método " + methodName + " possui uma quantidade inválida de parâmetros!");
+					"ERROR: O mï¿½todo " + methodName + " possui uma quantidade invï¿½lida de parï¿½metros!");
 		} else {
-			throw new InvalidFunctionException("ERROR: O método " + methodName + " nãoo existe!");
+			throw new InvalidFunctionException("ERROR: O mï¿½todo " + methodName + " nï¿½oo existe!");
 		}
 	}
 
@@ -520,17 +520,17 @@ public class SemanticsImpl implements Semantics {
 			throws InvalidVariableException, InvalidTypeException, InvalidFunctionException {
 		if (!checkVariableExistence(id)) {
 			throw new InvalidVariableException(
-					"ERROR: A variavel chamada " + id + " e com valor " + expression.getValue() + " não existe!");
+					"ERROR: A variavel chamada " + id + " e com valor " + expression.getValue() + " nï¿½o existe!");
 		}
 		if (!checkValidExistingType(expression.getType())) {
 			if (!expression.getType().getTypeName().equals("null")) {
 				throw new InvalidTypeException("ERROR: O tipo " + expression.getType().getTypeName()
-						+ " atribuido a variavel " + id + " não existe!");
+						+ " atribuido a variavel " + id + " nï¿½o existe!");
 			}
 		}
 		Type identifierType = findVariableByIdentifier(id).getType();
 		if (!checkTypeCompatibility(identifierType, expression.getType())) {
-			String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s não é compativel com %s",
+			String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s nï¿½o ï¿½ compativel com %s",
 					identifierType, expression.getType());
 			throw new InvalidFunctionException(exceptionMessage);
 		}
@@ -540,14 +540,14 @@ public class SemanticsImpl implements Semantics {
 			throws InvalidVariableException, InvalidTypeException, InvalidFunctionException {
 		if (!checkVariableExistence(id)) {
 			throw new InvalidVariableException(
-					"ERROR: A variavel chamada " + id + " atribuida a função " + function + " não existe!");
+					"ERROR: A variavel chamada " + id + " atribuida a funï¿½ï¿½o " + function + " nï¿½o existe!");
 		}
 		Type identifierType = findVariableByIdentifier(id).getType();
 
 		for (Function f : functions) {
 			if (f.getName().equals(function)) {
 				if (!checkTypeCompatibility(identifierType, f.getDeclaredReturnType())) {
-					String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s não é compativel com %s",
+					String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s nï¿½o ï¿½ compativel com %s",
 							identifierType, f.getDeclaredReturnType());
 					throw new InvalidFunctionException(exceptionMessage);
 				}
@@ -723,13 +723,13 @@ public class SemanticsImpl implements Semantics {
 				}
 				return new Expression(le.getType(), le.getValue() + " " + md);
 			default:
-				throw new InvalidOperationException("ERRO: A operação '" + md.toString() + "' não existe!");
+				throw new InvalidOperationException("ERRO: A operaï¿½ï¿½o '" + md.toString() + "' nï¿½o existe!");
 
 			}
 		}
 
-		throw new InvalidTypeException("ERROR: Operação formada pela expressão '" + le.getValue() + " " + md + " "
-				+ re.getValue() + "' não é permitida!");
+		throw new InvalidTypeException("ERROR: Operaï¿½ï¿½o formada pela expressï¿½o '" + le.getValue() + " " + md + " "
+				+ re.getValue() + "' nï¿½o ï¿½ permitida!");
 	}
 
 	private Type getMaxType(Type type1, Type type2) {
@@ -743,7 +743,7 @@ public class SemanticsImpl implements Semantics {
 	public boolean isRelationalExpression(Expression le, Expression re) throws InvalidOperationException {
 		if (!le.getType().equals(re.getType())) {
 			throw new InvalidOperationException(
-					"ERROR: A expressão não é relacional, que é formada pelas subexpressões de valor " + le.getValue()
+					"ERROR: A expressï¿½o nï¿½o ï¿½ relacional, que ï¿½ formada pelas subexpressï¿½es de valor " + le.getValue()
 							+ " do tipo " + le.getType().getTypeName() + " e de valor " + re.getValue() + " do tipo "
 							+ re.getType().getTypeName());
 		}
@@ -753,7 +753,7 @@ public class SemanticsImpl implements Semantics {
 	public boolean isNumericExpression(Expression e) throws InvalidOperationException {
 		if (!e.isNumeric()) {
 			throw new InvalidOperationException(
-					"ERROR: A expressão de tipo '" + e.getType() + "' e valor '" + e.getValue() + "' não é numérica");
+					"ERROR: A expressï¿½o de tipo '" + e.getType() + "' e valor '" + e.getValue() + "' nï¿½o ï¿½ numï¿½rica");
 		}
 		return true;
 	}
@@ -766,8 +766,8 @@ public class SemanticsImpl implements Semantics {
 				return true;
 			}
 		}
-		throw new InvalidOperationException("ERROR: A expressão não é numérica ou entre strings,'" + e1.getValue()
-				+ "' com tipo '" + e1.getType().getTypeName() + "' e/ou a expressão " + e2.getValue() + " com tipo '"
+		throw new InvalidOperationException("ERROR: A expressï¿½o nï¿½o ï¿½ numï¿½rica ou entre strings,'" + e1.getValue()
+				+ "' com tipo '" + e1.getType().getTypeName() + "' e/ou a expressï¿½o " + e2.getValue() + " com tipo '"
 				+ e2.getType().getTypeName());
 	}
 
