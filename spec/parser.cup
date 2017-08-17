@@ -371,7 +371,7 @@ method_declaration ::=
 		} else {
 			SemanticsImpl.getInstance().exitCurrentScope();
 		}
-		SemanticsImpl.getInstance().getCodeGenerator().addFunctionAddress(id);
+		SemanticsImpl.getInstance().getCodeGenerator().addBRSP((String) id);
 	:}
 ;
 
@@ -493,6 +493,14 @@ testing_expression ::=
 	:}
 ;
 
+literal_expression ::= 
+	BOOLEAN_LITERAL:bl 
+	{: 
+		System.out.print("Literal");
+		RESULT = new Expression(new Type("boolean"), bl.toString()); 
+	:}
+;
+
 logical_expression ::= 
 	NOT:op expression:e 
 	{: 
@@ -512,6 +520,10 @@ logical_expression ::=
 		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e1).getType());
 		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e2).getType());
 		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e3).getType());
+	:}
+	| BOOLEAN_LITERAL:bl 
+	{: 
+		RESULT = new Expression(new Type("boolean"),bl.toString());
 	:}
 ;
 
@@ -749,6 +761,7 @@ for_statement ::=
 	{:
 		SemanticsImpl.getInstance().dismissCurrentFor((Expression) eo);
 	:}
+	
 	| header_for:hf expression_opt:eo 
 	{:
 		SemanticsImpl.getInstance().createFor((Variable) hf, (Expression) eo, null);
@@ -757,6 +770,7 @@ for_statement ::=
 	{:
 		SemanticsImpl.getInstance().dismissCurrentFor(null);
 	:}
+	
 	| header_for:hf SEMICOLON RPAREN 
 	{:
 		SemanticsImpl.getInstance().createFor((Variable) hf, null, null);
@@ -765,6 +779,7 @@ for_statement ::=
 	{:
 		SemanticsImpl.getInstance().dismissCurrentFor(null);
 	:}
+	
 	| header_for:hf expression_opt:eo1 SEMICOLON expression_opt:eo2 RPAREN
 	{:
 	  	SemanticsImpl.getInstance().createFor((Variable) hf, (Expression) eo1, (Expression) eo2);

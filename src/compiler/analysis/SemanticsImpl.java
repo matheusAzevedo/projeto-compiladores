@@ -95,7 +95,7 @@ public class SemanticsImpl implements Semantics {
 	public void validateFunction(String functionName, ArrayList<Parameter> params, Type declaredType)
 			throws InvalidFunctionException, InvalidParameterException, Exception {
 		if (declaredType == null) {
-			throw new InvalidFunctionException("ERRO: O m�todo " + functionName
+			throw new InvalidFunctionException("ERROR: O m�todo " + functionName
 					+ " est� sem declara��o do tipo de retorno, ou se possui, n�o contem retorno no seu fim!");
 		}
 		Function temp = new Function(functionName, params);
@@ -247,19 +247,19 @@ public class SemanticsImpl implements Semantics {
 		}
 
 		if (exp == null && !declaredType.equals(new Type("void"))) {
-			throw new InvalidFunctionException("A fun��o '" + functionName + "' n�o tem retorno.");
+			throw new InvalidFunctionException("ERROR: A fun��o '" + functionName + "' n�o tem retorno.");
 		}
 
 		boolean isReturn = exp.getContext().equalsIgnoreCase("return");
 
 		if (!declaredType.equals(new Type("void"))) {
 			if (!isReturn) {
-				throw new InvalidFunctionException("A fun��o '" + functionName + "' n�o tem retorno.");
+				throw new InvalidFunctionException("ERROR: A fun��o '" + functionName + "' n�o tem retorno.");
 			}
 
 			if (!declaredType.equals(exp.getType()) && !checkTypeCompatibility(declaredType, exp.getType())) {
 				throw new InvalidFunctionException(
-						"A fun��o " + functionName + " n�o retornou o tipo esperado: " + declaredType);
+						"ERROR: A fun��o " + functionName + " n�o retornou o tipo esperado: " + declaredType);
 			}
 
 		} else {
@@ -381,7 +381,7 @@ public class SemanticsImpl implements Semantics {
 	public void createFor(Variable var, Expression e1, Expression e2)
 			throws InvalidTypeException, InvalidOperationException {
 		For f = new For("For");
-
+		
 		for (Variable v : getCurrentScope().getVars().values()) {
 			f.addVariable(v);
 		}
@@ -404,31 +404,33 @@ public class SemanticsImpl implements Semantics {
                 switch (Operation.valueOf(e1_parts[1])) {
                     case GT:
                         codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BLEQZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        codeGenerator.generateForCondition("BLEQZ", "for" + nfor);
                         break;
                     case LTEQ:
                         codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BGTZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        codeGenerator.generateForCondition("BGTZ", "for" + nfor);
                         break;
                     case LT:
                         codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BGEQZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        codeGenerator.generateForCondition("BGEQZ", "for" + nfor);
                         break;
                     case GTEQ:
                         codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BLTZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        codeGenerator.generateForCondition("BLTZ", "for" + nfor);
                         break;
                     case EQEQ:
-                        codeGenerator.generateForCondition("BNEQ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        codeGenerator.generateForCondition("BNEQ", "for" + nfor);
                         break;
                     case NOTEQ:
                         codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BEQ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                        codeGenerator.generateForCondition("BEQ", "for" + nfor);
                         break;
+                    default:
+                    	break;
                 }
             } else {
                 if (e1_parts[0].equals("false")) {
-                    codeGenerator.generateBRCode("forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
+                    codeGenerator.generateBRCode("for" + nfor);
                     condLabel.push(codeGenerator.getLabels());
                 } else if (e1_parts[0].equals("true")) {
                     condLabel.push(codeGenerator.getLabels() + 8);
@@ -559,6 +561,7 @@ public class SemanticsImpl implements Semantics {
 	public Expression getExpression(Expression le, Operation md, Expression re)
 			throws InvalidTypeException, InvalidOperationException {
 		Register register, r1, r2;
+        boolean a = true && false || true != true;
 
 		initCompatibleTypes();
 			
@@ -568,18 +571,12 @@ public class SemanticsImpl implements Semantics {
 			switch (md) {
 			case AND:
 				if (!isForExp) {
-					r1 = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
-					r2 = codeGenerator.generateLDCode(new Expression(new Type("boolean"), re.getValue()));
-
-					codeGenerator.generateANDCode(r1, r2);
+					codeGenerator.generateANDCode();
 				}
 				return new Expression(new Type("boolean"));
 			case OR:
 				if (!isForExp) {
-					r1 = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
-					r2 = codeGenerator.generateLDCode(new Expression(new Type("boolean"), re.getValue()));
-					
-					codeGenerator.generateORCode(r1, r2);
+					codeGenerator.generateORCode();
 				}
 				
 				return new Expression(new Type("boolean"));
@@ -588,18 +585,18 @@ public class SemanticsImpl implements Semantics {
 				if (!isForExp) {
 					codeGenerator.generateSUBCode();
 					codeGenerator.generateBLTZCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
 				}
 
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case EQEQ:
 				if (!isForExp) {
 					codeGenerator.generateBEQCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "0"));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "1"));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 
@@ -607,9 +604,9 @@ public class SemanticsImpl implements Semantics {
 				if (!isForExp) {
 					codeGenerator.generateSUBCode();
 					codeGenerator.generateBGTZCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case LT:
@@ -620,27 +617,28 @@ public class SemanticsImpl implements Semantics {
 								"forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor);
 					}
 					codeGenerator.generateBGEQZCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case GT:
 				if (!isForExp) {
 					codeGenerator.generateSUBCode();
 					codeGenerator.generateBLEQZCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
 
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case NOTEQ:
 				if (!isForExp) {
+					
 					codeGenerator.generateBEQCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case NOT:
@@ -648,27 +646,36 @@ public class SemanticsImpl implements Semantics {
 			case XOREQ:
 				return new Expression(new Type("boolean"));
 			case XOR:
+				if (!isForExp) {
+					codeGenerator.generateXORCode();
+				}
 				return new Expression(new Type("boolean"));
 			case OROR:
+				if (!isForExp) {
+					codeGenerator.generateORCode();
+				}
 				return new Expression(new Type("boolean"));
 			case ANDAND:
+				if (!isForExp) {
+					codeGenerator.generateANDCode();
+				}
 				return new Expression(new Type("boolean"));
 			case ANDEQ:
 				if (!isForExp) {
 					codeGenerator.generateANDCode();
 					codeGenerator.generateBEQCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case OREQ:
 				if (!isForExp) {
 					codeGenerator.generateORCode();
 					codeGenerator.generateBEQCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case OROREQ:

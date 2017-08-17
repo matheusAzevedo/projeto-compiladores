@@ -129,6 +129,16 @@ public class CodeGenerator {
 		addCode(labels + ": SUB " + result + ", " + one + ", " + cons);
 	}
 
+	public void generateXORCode() {
+		incrementLabel();
+		Register regOne = registers[register - 1];
+		Register regTwo = allocateRegister();
+
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": XOR " + result + ", " + regOne + ", " + regTwo);
+	}
+	
 	public void generateANDCode() {
 		incrementLabel();
 		Register regOne = registers[register - 1];
@@ -405,7 +415,6 @@ public class CodeGenerator {
 	}
 
 	public void generateCodeFunctionCall(String name){
-
 		Integer addressfuction = functionAddres.get(name);
 
 		String assa = SemanticsImpl.getInstance().getCurrentScope().getName();
@@ -478,7 +487,7 @@ public class CodeGenerator {
 	public void generateFinalAssemblyCode() throws IOException {
 		String rootPath = Paths.get("").toAbsolutePath().toString();
 		String filePath = "/code/";
-		String generatedcode = rootPath + filePath + "generated-assembly.txt";
+		String generatedcode = rootPath + filePath + "code-assembly.s";
 
 		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(generatedcode)));
 
