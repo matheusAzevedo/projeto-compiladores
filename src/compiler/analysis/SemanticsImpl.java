@@ -583,6 +583,7 @@ public class SemanticsImpl implements Semantics {
 				}
 				
 				return new Expression(new Type("boolean"));
+	
 			case GTEQ:
 				if (!isForExp) {
 					codeGenerator.generateSUBCode();
@@ -653,9 +654,23 @@ public class SemanticsImpl implements Semantics {
 			case ANDAND:
 				return new Expression(new Type("boolean"));
 			case ANDEQ:
-				return new Expression(new Type("boolean"));
+				if (!isForExp) {
+					codeGenerator.generateANDCode();
+					codeGenerator.generateBEQCode(3);
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					codeGenerator.generateBRCode(2);
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+				}
+				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case OREQ:
-				return new Expression(new Type("boolean"));
+				if (!isForExp) {
+					codeGenerator.generateORCode();
+					codeGenerator.generateBEQCode(3);
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+					codeGenerator.generateBRCode(2);
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
+				}
+				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case OROREQ:
 				return new Expression(new Type("boolean"));
 			case MINUS:
