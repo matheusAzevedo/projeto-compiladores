@@ -9,14 +9,5 @@ public class Code extends Code {
 		
 	}
 	
-	public int dsd() {
-		return 0;
-	}
-	
-	/** Este comentario precisa ser ignorado */
-	public String metodo(int numero, String palavra) {
-		dsd();
-		
-        return palavra;
-	}
+	boolean gg = !true;
 }

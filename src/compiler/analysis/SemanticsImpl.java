@@ -30,7 +30,7 @@ public class SemanticsImpl implements Semantics {
 	private List<Variable> tempVariables;
 	private static Map<String, List<String>> compatibleTypes;
 	private Stack<ScopedEntity> scopedEntities;
-    private Stack<Integer> condLabel;
+	private Stack<Integer> condLabel;
 	private ArrayList<Function> functions;
 	private HashMap<String, Variable> vars;
 	private static String currentOperator;
@@ -47,7 +47,7 @@ public class SemanticsImpl implements Semantics {
 		}
 		initCompatibleTypes();
 		return instance;
-		
+
 	}
 
 	protected SemanticsImpl() {
@@ -89,7 +89,7 @@ public class SemanticsImpl implements Semantics {
 			return tipos.contains(rightType.getTypeName());
 		}
 	}
-	
+
 	public void checkTypeVariablesCompatibility(Type leftType, Type rightType) throws InvalidFunctionException {
 		List<String> tipos = compatibleTypes.get(leftType.getTypeName());
 		if (leftType.equals(rightType)) {
@@ -122,7 +122,7 @@ public class SemanticsImpl implements Semantics {
 					keyFunc += p.getType().getTypeName();
 				}
 			}
-            codeGenerator.addFunctionAddress(keyFunc);
+			codeGenerator.addFunctionAddress(keyFunc);
 			addFunctionAndNewScope(temp);
 		}
 	}
@@ -292,8 +292,8 @@ public class SemanticsImpl implements Semantics {
 		for (Function fun : functions) {
 			if (fun.getName().equals(temp.getName())) {
 				if (!fun.getDeclaredReturnType().getTypeName().equals(temp.getDeclaredReturnType().getTypeName())) {
-					throw new InvalidFunctionException(
-							"ERRO: O m�todo " + temp.getName() + " ja foi declarado com um tipo de retorno diferente!");
+					throw new InvalidFunctionException("ERRO: O m�todo " + temp.getName()
+							+ " ja foi declarado com um tipo de retorno diferente!");
 				}
 				if (temp.equals(fun)) {
 					throw new InvalidFunctionException(
@@ -391,7 +391,7 @@ public class SemanticsImpl implements Semantics {
 	public void createFor(Variable var, Expression e1, Expression e2)
 			throws InvalidTypeException, InvalidOperationException {
 		For f = new For("For");
-		
+
 		for (Variable v : getCurrentScope().getVars().values()) {
 			f.addVariable(v);
 		}
@@ -399,54 +399,55 @@ public class SemanticsImpl implements Semantics {
 		if (var != null) {
 			f.addVariable(var);
 		}
-		
+
 		if (e1 != null) {
 			if (!e1.getType().getTypeName().equals("boolean")) {
-				throw new InvalidTypeException("ERROR: O valor para a express�o deveria ser boolean, por�m � do tipo "
-						+ e1.getType().getTypeName());
+				throw new InvalidTypeException(
+						"ERROR: O valor para a express�o deveria ser boolean, por�m � do tipo "
+								+ e1.getType().getTypeName());
 			}
-			
+
 			String[] e1_parts = e1.getValue().split(" ");
-            if(e1_parts.length > 1) {
-                codeGenerator.generateLDCode(findVariableByIdentifier(e1_parts[0]));
-                condLabel.push(codeGenerator.getLabels());
-                codeGenerator.generateLDCode(new Expression(new Type("int") ,e1_parts[2]));
-                switch (Operation.valueOf(e1_parts[1])) {
-                    case GT:
-                        codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BLEQZ", "for" + nfor);
-                        break;
-                    case LTEQ:
-                        codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BGTZ", "for" + nfor);
-                        break;
-                    case LT:
-                        codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BGEQZ", "for" + nfor);
-                        break;
-                    case GTEQ:
-                        codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BLTZ", "for" + nfor);
-                        break;
-                    case EQEQ:
-                        codeGenerator.generateForCondition("BNEQ", "for" + nfor);
-                        break;
-                    case NOTEQ:
-                        codeGenerator.generateSUBCode();
-                        codeGenerator.generateForCondition("BEQ", "for" + nfor);
-                        break;
-                    default:
-                    	break;
-                }
-            } else {
-                if (e1_parts[0].equals("false")) {
-                    codeGenerator.generateBRCode("for" + nfor);
-                    condLabel.push(codeGenerator.getLabels());
-                } else if (e1_parts[0].equals("true")) {
-                    condLabel.push(codeGenerator.getLabels() + 8);
-                }
-            }
-			
+			if (e1_parts.length > 1) {
+				codeGenerator.generateLDCode(findVariableByIdentifier(e1_parts[0]));
+				condLabel.push(codeGenerator.getLabels());
+				codeGenerator.generateLDCode(new Expression(new Type("int"), e1_parts[2]));
+				switch (Operation.valueOf(e1_parts[1])) {
+				case GT:
+					codeGenerator.generateSUBCode();
+					codeGenerator.generateForCondition("BLEQZ", "for" + nfor);
+					break;
+				case LTEQ:
+					codeGenerator.generateSUBCode();
+					codeGenerator.generateForCondition("BGTZ", "for" + nfor);
+					break;
+				case LT:
+					codeGenerator.generateSUBCode();
+					codeGenerator.generateForCondition("BGEQZ", "for" + nfor);
+					break;
+				case GTEQ:
+					codeGenerator.generateSUBCode();
+					codeGenerator.generateForCondition("BLTZ", "for" + nfor);
+					break;
+				case EQEQ:
+					codeGenerator.generateForCondition("BNEQ", "for" + nfor);
+					break;
+				case NOTEQ:
+					codeGenerator.generateSUBCode();
+					codeGenerator.generateForCondition("BEQ", "for" + nfor);
+					break;
+				default:
+					break;
+				}
+			} else {
+				if (e1_parts[0].equals("false")) {
+					codeGenerator.generateBRCode("for" + nfor);
+					condLabel.push(codeGenerator.getLabels());
+				} else if (e1_parts[0].equals("true")) {
+					condLabel.push(codeGenerator.getLabels() + 8);
+				}
+			}
+
 			setForExp(false);
 		}
 
@@ -491,10 +492,11 @@ public class SemanticsImpl implements Semantics {
 			}
 
 		}
-		
-		String x = codeGenerator.getAssemblyCode().replace("forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP"+nfor, ""+(codeGenerator.getLabels()+8));
+
+		String x = codeGenerator.getAssemblyCode().replace("forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + nfor,
+				"" + (codeGenerator.getLabels() + 8));
 		nfor--;
-        codeGenerator.setAssemblyCode(x);
+		codeGenerator.setAssemblyCode(x);
 		ScopedEntity scoped = scopedEntities.pop();
 	}
 
@@ -559,8 +561,9 @@ public class SemanticsImpl implements Semantics {
 		for (Function f : functions) {
 			if (f.getName().equals(function)) {
 				if (!checkTypeCompatibility(identifierType, f.getDeclaredReturnType())) {
-					String exceptionMessage = String.format("ERROR: Tipos incompativeis! %s n�o � compativel com %s",
-							identifierType, f.getDeclaredReturnType());
+					String exceptionMessage = String.format(
+							"ERROR: Tipos incompativeis! %s n�o � compativel com %s", identifierType,
+							f.getDeclaredReturnType());
 					throw new InvalidFunctionException(exceptionMessage);
 				}
 
@@ -571,10 +574,9 @@ public class SemanticsImpl implements Semantics {
 	public Expression getExpression(Expression le, Operation md, Expression re)
 			throws InvalidTypeException, InvalidOperationException {
 		Register register, r1, r2;
-        boolean a = true && false || true != true;
-
+		boolean a = true && false || true != true;
+		
 		initCompatibleTypes();
-			
 		if (re == null || checkTypeCompatibility(le.getType(), re.getType())
 				|| checkTypeCompatibility(re.getType(), le.getType())) {
 
@@ -588,10 +590,11 @@ public class SemanticsImpl implements Semantics {
 				if (!isForExp) {
 					codeGenerator.generateORCode();
 				}
-				
+					
 				return new Expression(new Type("boolean"));
-	
+
 			case GTEQ:
+				// TODO olhar
 				if (!isForExp) {
 					codeGenerator.generateSUBCode();
 					codeGenerator.generateBLTZCode(3);
@@ -611,6 +614,7 @@ public class SemanticsImpl implements Semantics {
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 
 			case LTEQ:
+				// TODO olhar
 				if (!isForExp) {
 					codeGenerator.generateSUBCode();
 					codeGenerator.generateBGTZCode(3);
@@ -620,7 +624,9 @@ public class SemanticsImpl implements Semantics {
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case LT:
+				// TODO olhar
 				if (!isForExp) {
+					System.err.println("AQUI pq");
 					codeGenerator.generateSUBCode();
 					if (le.getContext() == "for") {
 						codeGenerator.generateForCondition("BGEQZ",
@@ -633,27 +639,30 @@ public class SemanticsImpl implements Semantics {
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case GT:
+				// TODO olhar
 				if (!isForExp) {
 					codeGenerator.generateSUBCode();
 					codeGenerator.generateBLEQZCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
 
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case NOTEQ:
 				if (!isForExp) {
-					
 					codeGenerator.generateBEQCode(3);
-					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
 					codeGenerator.generateBRCode(2);
-					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), "0"));
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case NOT:
 				return new Expression(new Type("boolean"));
 			case XOREQ:
+				if (!isForExp) {
+					codeGenerator.generateXORCode();
+				}
 				return new Expression(new Type("boolean"));
 			case XOR:
 				if (!isForExp) {
@@ -760,17 +769,17 @@ public class SemanticsImpl implements Semantics {
 	public boolean isRelationalExpression(Expression le, Expression re) throws InvalidOperationException {
 		if (!le.getType().equals(re.getType())) {
 			throw new InvalidOperationException(
-					"ERROR: A express�o n�o � relacional, que � formada pelas subexpress�es de valor " + le.getValue()
-							+ " do tipo " + le.getType().getTypeName() + " e de valor " + re.getValue() + " do tipo "
-							+ re.getType().getTypeName());
+					"ERROR: A express�o n�o � relacional, que � formada pelas subexpress�es de valor "
+							+ le.getValue() + " do tipo " + le.getType().getTypeName() + " e de valor " + re.getValue()
+							+ " do tipo " + re.getType().getTypeName());
 		}
 		return true;
 	}
 
 	public boolean isNumericExpression(Expression e) throws InvalidOperationException {
 		if (!e.isNumeric()) {
-			throw new InvalidOperationException(
-					"ERROR: A express�o de tipo '" + e.getType() + "' e valor '" + e.getValue() + "' n�o � num�rica");
+			throw new InvalidOperationException("ERROR: A express�o de tipo '" + e.getType() + "' e valor '"
+					+ e.getValue() + "' n�o � num�rica");
 		}
 		return true;
 	}
@@ -783,9 +792,9 @@ public class SemanticsImpl implements Semantics {
 				return true;
 			}
 		}
-		throw new InvalidOperationException("ERROR: A express�o n�o � num�rica ou entre strings,'" + e1.getValue()
-				+ "' com tipo '" + e1.getType().getTypeName() + "' e/ou a express�o " + e2.getValue() + " com tipo '"
-				+ e2.getType().getTypeName());
+		throw new InvalidOperationException("ERROR: A express�o n�o � num�rica ou entre strings,'"
+				+ e1.getValue() + "' com tipo '" + e1.getType().getTypeName() + "' e/ou a express�o " + e2.getValue()
+				+ " com tipo '" + e2.getType().getTypeName());
 	}
 
 	public boolean isStringExpression(Expression le, Expression re) throws InvalidOperationException {

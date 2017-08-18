@@ -95,6 +95,11 @@ public class CodeGenerator {
 		incrementLabel();
 		addCode(labels + ": ADD " + result + ", " + one + ", " + cons);
 	}
+	
+	public void generateADDCode(Register result, Register one, Register two) {
+		labels += 8;
+		addCode(labels + ": ADD " + result + ", " + one + ", " + two);
+	}
 
 	public void generateADDCode(Register result, Register one, Expression exp) {
 		incrementLabel();
@@ -137,6 +142,15 @@ public class CodeGenerator {
 		register++;
 		Register result = allocateRegister();
 		addCode(labels + ": XOR " + result + ", " + regOne + ", " + regTwo);
+	}
+	
+	public void generateBaseNOTCode() {
+		incrementLabel();
+		System.out.println("fsdfsdfsd");
+		register++;
+		Register re = registers[register - 1];
+		Register result = allocateRegister();
+		addCode(labels + ": XOR " + result + ", " + re + ", #true");
 	}
 	
 	public void generateANDCode() {
@@ -193,6 +207,14 @@ public class CodeGenerator {
 	public void generateORCode(Register result, Register regOne, String cons) {
 		incrementLabel();
 		addCode(labels + ": OR " + result + ", " + regOne + ", " + cons);
+	}
+	
+	public void generateNOTCode() {
+		generateBEQZCode(4);
+		generateMULCode(Register.R2, Register.R1, new Expression(new Type("int"), "-1"));
+		generateADDCode(Register.R1, Register.R1, Register.R2);
+		generateBRCode(2);
+		generateADDCode(Register.R1, Register.R1, new Expression(new Type("int"), "1"));
 	}
 	
 	public void generateMULCode() {
@@ -302,6 +324,14 @@ public class CodeGenerator {
 
 		Register current = allocateRegister();
 		addCode(labels + ": BGTZ " + current + ", " + jump);
+	}
+	
+	public void generateBEQZCode(int br) {
+		labels += 8;
+		int jump = (br * 8) + labels;
+
+		Register current = allocateRegister();
+		addCode(labels + ": BEQZ " + current + ", " + jump);
 	}
 
 	public void generateBRCode(int br) {

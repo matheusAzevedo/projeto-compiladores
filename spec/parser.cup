@@ -513,6 +513,7 @@ logical_expression ::=
 	NOT:op expression:e 
 	{: 
 		SemanticsImpl.getInstance().checkIsBoolean(((Expression)e).getType());
+		SemanticsImpl.getInstance().getCodeGenerator().generateNOTCode();
 		RESULT = e;
 	:}
 	| expression:e1 logical_op:lo expression:e2
