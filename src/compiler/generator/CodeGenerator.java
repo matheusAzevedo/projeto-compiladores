@@ -204,6 +204,8 @@ public class CodeGenerator {
 		addCode(labels + ": OR " + result + ", " + regOne + ", #" + cons);
 	}
 
+	double x = (int)(0 - 10.0);
+	
 	public void generateORCode(Register result, Register regOne, String cons) {
 		incrementLabel();
 		addCode(labels + ": OR " + result + ", " + regOne + ", " + cons);

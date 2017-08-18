@@ -9,5 +9,5 @@ public class Code extends Code {
 		
 	}
 	
-	boolean gg = !true;
+	double x = 10.0;
 }

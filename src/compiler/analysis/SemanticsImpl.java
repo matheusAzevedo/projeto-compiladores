@@ -660,11 +660,13 @@ public class SemanticsImpl implements Semantics {
 			case NOT:
 				return new Expression(new Type("boolean"));
 			case XOREQ:
+				// TODO olhar
 				if (!isForExp) {
 					codeGenerator.generateXORCode();
 				}
 				return new Expression(new Type("boolean"));
 			case XOR:
+				// TODO olhar
 				if (!isForExp) {
 					codeGenerator.generateXORCode();
 				}
