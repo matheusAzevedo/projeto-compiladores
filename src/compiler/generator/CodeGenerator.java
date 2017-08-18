@@ -300,6 +300,13 @@ public class CodeGenerator {
 		Register current = allocateRegister();
 		addCode(labels + ": " + op + " " + current + ", " + jump);
 	}
+	
+	public void generateForThreeConditions(String op, String jump) {
+		labels += 8;
+		Register current = allocateRegister();
+		Register r2 = registers[register-1];
+		addCode(labels + ": " + op + " " + r2 + ", "  + current + ", " + jump);
+	}
 
 	public void generateBGEQZCode(int br) {
 		labels += 8;

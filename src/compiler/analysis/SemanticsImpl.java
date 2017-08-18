@@ -430,11 +430,11 @@ public class SemanticsImpl implements Semantics {
 					codeGenerator.generateForCondition("BLTZ", "for" + nfor);
 					break;
 				case EQEQ:
-					codeGenerator.generateForCondition("BNEQ", "for" + nfor);
+					codeGenerator.generateForThreeConditions("BNEQ", "for" + nfor);
 					break;
 				case NOTEQ:
 					codeGenerator.generateSUBCode();
-					codeGenerator.generateForCondition("BEQ", "for" + nfor);
+					codeGenerator.generateForThreeConditions("BEQ", "for" + nfor);
 					break;
 				default:
 					break;
