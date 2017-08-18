@@ -97,13 +97,20 @@ public class CodeGenerator {
 	}
 	
 	public void generateADDCode(Register result, Register one, Register two) {
-		labels += 8;
+		incrementLabel();
 		addCode(labels + ": ADD " + result + ", " + one + ", " + two);
 	}
 
 	public void generateADDCode(Register result, Register one, Expression exp) {
 		incrementLabel();
 		addCode(labels + ": ADD " + result + ", " + one + ", #" + exp.getAssemblyValue());
+	}
+	
+	public void generateADDCode(Register r1, Register r2) {
+		incrementLabel();
+		register++;
+		Register result = allocateRegister();
+		addCode(labels + ": ADD " + result + ", " + r1 + ", " + r2);
 	}
 
 	public void generateSUBCode() {
@@ -203,8 +210,6 @@ public class CodeGenerator {
 		Register result = allocateRegister();
 		addCode(labels + ": OR " + result + ", " + regOne + ", #" + cons);
 	}
-
-	double x = (int)(0 - 10.0);
 	
 	public void generateORCode(Register result, Register regOne, String cons) {
 		incrementLabel();
@@ -250,7 +255,7 @@ public class CodeGenerator {
 		Register result = allocateRegister();
 		addCode(labels + ": DIV " + result + ", " + one + ", " + two);
 	}
-
+	
 	public void generateMULCode(Register result, Register one, Expression exp) {
 		incrementLabel();
 		addCode(labels + ": MUL " + result + ", " + one + ", #" + exp.getValue());
@@ -491,6 +496,10 @@ public class CodeGenerator {
 			}
 			generateBRCode(Register._SP);
 		}
+	}
+	
+	public Register getLastRegister() {
+		return allocateRegister();
 	}
 
 	public Register allocateRegister(){

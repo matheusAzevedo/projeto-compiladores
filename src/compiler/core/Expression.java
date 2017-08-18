@@ -4,7 +4,8 @@ public class Expression {
 	private Type type;
 	private String value;
 	private String context;
-
+	private Register register;
+	
 	public Expression(Type t) {
 		this.type = t;
 	}
@@ -42,25 +43,34 @@ public class Expression {
 	public void setContext(String context) {
 		this.context = context;
 	}
+	
+	public void setRegister(Register register) {
+		this. register = register;
+	}
+	
+	public Register getRegister() {
+		return register;
+	}
 
 	public boolean isNumeric() {
 		return getType().getTypeName().equals("int") || getType().getTypeName().equals("float")
-				|| getType().getTypeName().equals("long") || getType().getTypeName().equals("double");
+				|| getType().getTypeName().equals("long") || getType().getTypeName().equals("double")
+				|| getType().getTypeName().equals("Integer");
 	}
-	
+
 	public boolean isString() {
-        return getType().getTypeName().equalsIgnoreCase("String");
-    }
+		return getType().getTypeName().equalsIgnoreCase("String");
+	}
 
 	public String toString() {
 		return "Expression of type; " + getType();
 	}
 
 	public String getAssemblyValue() {
-		if(this.value != null){
-			if(this.value.equals("true")){
+		if (this.value != null) {
+			if (this.value.equals("true")) {
 				return "1";
-			}else if(this.value.equals("false")){
+			} else if (this.value.equals("false")) {
 				return "0";
 			}
 		}

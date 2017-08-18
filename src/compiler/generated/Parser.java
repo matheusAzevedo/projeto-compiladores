@@ -1585,9 +1585,6 @@ class CUP$Parser$actions {
 		int vright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
 		Object v = (Object)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
 		
-		if (((Variable)v).getType().getTypeName() != "null") {
-			SemanticsImpl.getInstance().checkTypeVariablesCompatibility(((Variable)v).getType(), (Type)t);
-		}
 		SemanticsImpl.getInstance().addVariablesFromTempList((Type) t);
 		RESULT = v;
 	
@@ -1892,7 +1889,9 @@ class CUP$Parser$actions {
 		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 		 
 		SemanticsImpl.getInstance().isNumericExpression((Expression) e1, (Expression) e2);
- 		RESULT = SemanticsImpl.getInstance().getExpression((Expression) e1, Operation.valueOf(((Node) bo).getIdentifier()),	(Expression) e2); 
+		Expression res = SemanticsImpl.getInstance().getExpression((Expression) e1, Operation.valueOf(((Node) bo).getIdentifier()),	(Expression) e2);
+		res.setRegister((Register)SemanticsImpl.getInstance().getCodeGenerator().getLastRegister()); 		
+		RESULT = res; 
 	
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("numeric_expression",8, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-2)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
@@ -2684,6 +2683,7 @@ class CUP$Parser$actions {
 			if(!SemanticsImpl.getInstance().isForExp) {
 				SemanticsImpl.getInstance().getCodeGenerator().assignmentDeclaration((Variable)var,(Expression)e);
 			}
+
 			RESULT = e;
 		}
 	

@@ -575,7 +575,6 @@ public class SemanticsImpl implements Semantics {
 			throws InvalidTypeException, InvalidOperationException {
 		Register register, r1, r2;
 		boolean a = true && false || true != true;
-		
 		initCompatibleTypes();
 		if (re == null || checkTypeCompatibility(le.getType(), re.getType())
 				|| checkTypeCompatibility(re.getType(), le.getType())) {
@@ -590,7 +589,6 @@ public class SemanticsImpl implements Semantics {
 				if (!isForExp) {
 					codeGenerator.generateORCode();
 				}
-					
 				return new Expression(new Type("boolean"));
 
 			case GTEQ:
@@ -700,6 +698,13 @@ public class SemanticsImpl implements Semantics {
 				}
 				return new Expression(new Type("boolean"), le.getValue() + " " + md + " " + re.getValue());
 			case OROREQ:
+				if (!isForExp) {
+					codeGenerator.generateORCode();
+					codeGenerator.generateBEQCode(3);
+					register = codeGenerator.generateLDCode(new Expression(new Type("boolean"), le.getValue()));
+					codeGenerator.generateBRCode(2);
+					codeGenerator.generateLDCode(register, new Expression(new Type("boolean"), re.getValue()));
+				}
 				return new Expression(new Type("boolean"));
 			case MINUS:
 				if (!isForExp) {
@@ -842,7 +847,10 @@ public class SemanticsImpl implements Semantics {
 		stringCompTypes.add("char");
 		stringCompTypes.add("null");
 		stringCompTypes.add("boolean");
-
+		
+		List<String> nullCompTypes = new ArrayList<String>();
+		nullCompTypes.add("String");
+		
 		compatibleTypes.put("double", doubleCompTypes);
 		compatibleTypes.put("float", floatCompTypes);
 		compatibleTypes.put("long", longCompTypes);
@@ -850,6 +858,7 @@ public class SemanticsImpl implements Semantics {
 		compatibleTypes.put("boolean", booleanCompTypes);
 		compatibleTypes.put("Integer", intCompTypes);
 		compatibleTypes.put("String", stringCompTypes);
+		compatibleTypes.put("null", nullCompTypes);
 	}
 
 	public static boolean isForExp() {
